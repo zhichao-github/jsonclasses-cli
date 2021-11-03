@@ -1,13 +1,13 @@
 """setup.py"""
 from pathlib import Path
 from setuptools import setup, find_packages
-
+from jsonclasses_cli.version import version
 # The text of the README file
 README = (Path(__file__).parent / "README.md").read_text()
 
 setup(
     name='jsonclasses-cli',
-    version='3.0.2',
+    version=version,
     description=('JSONClasses CLI'),
     long_description=README,
     long_description_content_type='text/markdown',

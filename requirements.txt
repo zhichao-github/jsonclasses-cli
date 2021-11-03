@@ -1,3 +1,4 @@
 click>=8.0.3,<9.0.0
+inquirer>=2.7.0,<3.0.0
 jsonclasses>=3.0.2,<4.0.0
 jsonclasses-server>=3.0.2,<4.0.0
