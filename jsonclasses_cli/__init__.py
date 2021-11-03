@@ -17,23 +17,23 @@ def print_version(ctx, param, value):
 
 
 @group()
-@option('-v', '--version', is_flag=True, callback=print_version, expose_value=False, is_eager=True)
+@option('-v', '--version', is_flag=True, callback=print_version, expose_value=False, is_eager=True, help='Show version and exit.')
 def app():
     pass
 
 
-@app.command()
+@app.command(help='Upgrade this CLI to the newest version.')
 def upgrade():
     execute_upgrade()
 
 
-@app.command()
+@app.command(help='Create a new project.')
 @argument('name')
-@option('-i', '--interactive/--no-interactive', ' /-I', default=True)
-@option('--http-framework', type=Choice(['flask', 'fastapi'], case_sensitive=False), required=False)
-@option('-u', '--include-user', is_flag=True, required=False, default=None)
-@option('-a', '--include-admin', is_flag=True, required=False, default=None)
-@option('-t', '--include-template', is_flag=True, required=False, default=None)
+@option('-i', '--interactive/--no-interactive', ' /-I', default=True, help='Whether run interactively.')
+@option('--http-library', type=Choice(['flask', 'fastapi'], case_sensitive=False), required=False, help='The HTTP Library to use.')
+@option('-u', '--include-user', is_flag=True, required=False, default=None, help='Whether include user.')
+@option('-a', '--include-admin', is_flag=True, required=False, default=None, help='Whether include admin.')
+@option('-t', '--include-template', is_flag=True, required=False, default=None, help='Whether include template.')
 def new(name: str,
         interactive: bool | None,
         http_framework: Literal['flask', 'fastapi'] | None,
@@ -48,7 +48,7 @@ def new(name: str,
                 include_template=include_template)
 
 
-@app.command()
+@app.command(help='Generate a client package.')
 @argument('lang')
 @argument('file', default='app.py')
 def package(lang: str, file: str | None):
