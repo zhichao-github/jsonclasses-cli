@@ -1,5 +1,6 @@
 from typing import Literal
 from pathlib import Path
+from rich import print
 from rich.prompt import Prompt
 from .app_content import app_content
 from .req_content import req_content
@@ -62,3 +63,7 @@ def new(dest: Path,
         run(f'source {venv_act}; pip install -r requirements.txt')
     else:
         run('pip install -r requirements.txt')
+    print("🎉[green]Project is successfully created.[/green]")
+    match http_library:
+        case 'flask':
+            print("\n    Run 'flask run' to start the development server.\n")
