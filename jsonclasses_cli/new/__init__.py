@@ -54,4 +54,11 @@ def new(dest: Path,
             run('git init')
     if venv:
         if not ((dest / 'venv').is_dir() or (dest / '.venv').is_dir()):
-            run('python3 -m venv .venv')
+            dest_venv = dest / '.venv'
+            run(f'python3 -m venv {dest_venv}')
+    if venv:
+        venv_dir = dest / 'venv' if (dest / 'venv').is_dir() else dest / '.venv'
+        venv_act = venv_dir / 'bin/activate'
+        run(f'source {venv_act}; pip install -r requirements.txt')
+    else:
+        run('pip install -r requirements.txt')
