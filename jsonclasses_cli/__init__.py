@@ -33,19 +33,19 @@ def upgrade():
 @option('--http-library', type=Choice(['flask', 'fastapi'], case_sensitive=False), required=False, help='The HTTP Library to use.')
 @option('-u', '--include-user', is_flag=True, required=False, default=None, help='Whether include user.')
 @option('-a', '--include-admin', is_flag=True, required=False, default=None, help='Whether include admin.')
-@option('-t', '--include-template', is_flag=True, required=False, default=None, help='Whether include template.')
+@option('-g', '--git-init', is_flag=True, required=False, default=None, help='Whether create a git repo.')
 def new(name: str,
         interactive: bool | None,
-        http_framework: Literal['flask', 'fastapi'] | None,
+        http_library: Literal['flask', 'fastapi'] | None,
         include_user: bool | None,
         include_admin: bool | None,
-        include_template: bool | None):
+        git_init: bool | None):
     execute_new(Path(getcwd()) / name,
                 interactive=interactive,
-                http_framework=http_framework,
+                http_library=http_library,
                 include_user=include_user,
                 include_admin=include_admin,
-                include_template=include_template)
+                git_init=git_init)
 
 
 @app.command(help='Generate a client package.')
