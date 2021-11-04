@@ -2,5 +2,8 @@ from pathlib import Path
 
 
 def write_file(path: Path, content: str) -> None:
-    print('write to ', path)
-    print(content)
+
+    if not path.parent.exists():
+        path.parent.mkdir()
+    with open(path, 'w') as file:
+        file.write(content)

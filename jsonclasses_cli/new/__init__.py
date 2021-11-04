@@ -1,4 +1,3 @@
-from os import write
 from typing import Literal
 from pathlib import Path
 from rich.prompt import Prompt
@@ -7,6 +6,8 @@ from .req_content import req_content
 from .conf_content import conf_content
 from .mypy_content import mypy_content
 from .gitignore_content import gitignore_content
+from .readme_content import readme_content
+from .env_content import env_content
 from ..utils.yesno import yesno
 from ..utils.write_file import write_file
 from ..utils.run import run
@@ -46,8 +47,11 @@ def new(dest: Path,
     write_file(dest / 'config.json', conf_content(http_library=http_library, include_user=include_user, include_admin=include_admin))
     write_file(dest / 'mypy.ini', mypy_content())
     write_file(dest / '.gitignore', gitignore_content())
+    write_file(dest / 'README.md', readme_content(dest))
+    write_file(dest / '.env', env_content())
     if git_init:
-        run('git init')
+        if not (dest / '.git').is_dir():
+            run('git init')
     if venv:
         if not ((dest / 'venv').is_dir() or (dest / '.venv').is_dir()):
             run('python3 -m venv .venv')
