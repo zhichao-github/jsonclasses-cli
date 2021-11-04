@@ -1,2 +1,5 @@
+from os import system
+
+
 def upgrade():
-    pass
+    system('pip install --upgrade jsonclasses-cli')

@@ -51,15 +51,15 @@ def new(name: str,
                 venv=venv)
 
 
-@app.command(help='Generate a client package.')
-@argument('lang')
-@argument('file', default='app.py')
-def package(lang: str, file: str | None):
-    dest = Path(getcwd())
-    app_file = dest / file
-    app_module = import_module('app', app_file)
-    app = app_module.app
-    execute_package(dest, app, lang)
+# @app.command(help='Generate a client package.')
+# @argument('lang')
+# @argument('file', default='app.py')
+# def package(lang: str, file: str | None):
+#     dest = Path(getcwd())
+#     app_file = dest / file
+#     app_module = import_module('app', app_file)
+#     app = app_module.app
+#     execute_package(dest, app, lang)
 
 
 if __name__ == '__main__':
