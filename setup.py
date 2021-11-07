@@ -22,7 +22,9 @@ setup(
     python_requires='>=3.10',
     install_requires=[
         'click>=8.0.3,<9.0.0',
-        'rich>=10.12.0,<11.0.0'
+        'rich>=10.12.0,<11.0.0',
+        'jsonclasses>=3.1.0,<3.2.0',
+        'jsonclasses-server>=3.1.0,<3.2.0'
     ],
     entry_points={
         'console_scripts': [
