@@ -20,7 +20,10 @@ setup(
     url='https://github.com/fillmula/jsonclasses-cli',
     include_package_data=True,
     python_requires='>=3.10',
-    install_requires=[],
+    install_requires=[
+        'click>=8.0.3,<9.0.0',
+        'rich>=10.12.0,<11.0.0'
+    ],
     entry_points={
         'console_scripts': [
             'jsonclasses = jsonclasses_cli:app',
