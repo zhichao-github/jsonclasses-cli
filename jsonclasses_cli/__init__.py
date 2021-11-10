@@ -6,6 +6,7 @@ from click import group, argument, option, echo, Choice
 from .new import new as execute_new
 from .upgrade import upgrade as execute_upgrade
 from .package import package as execute_package
+from .console import console as execute_console
 from .version import version
 
 
@@ -49,6 +50,14 @@ def new(name: str,
                 include_admin=include_admin,
                 git_init=git_init,
                 venv=venv)
+
+
+@app.command(help='Launch an interactive console.')
+@argument('file', default='app.py')
+def console(file: str | None):
+    dest = Path(getcwd())
+    app_file = dest / file
+    execute_console(dest, app_file)
 
 
 # @app.command(help='Generate a client package.')
