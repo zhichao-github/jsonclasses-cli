@@ -67,3 +67,5 @@ def new(dest: Path,
     match http_library:
         case 'flask':
             print("\n    Run 'flask run' to start the development server.\n")
+        case 'fastapi':
+            print("\n    Run 'uvicorn app:app --reload' to start the development server.\n")
