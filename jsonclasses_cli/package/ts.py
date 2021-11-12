@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Literal
+from typing import Literal, cast
 from inflection import camelize
 from jsonclasses.cdef import Cdef
 from jsonclasses.cgraph import CGraph
@@ -7,6 +7,7 @@ from jsonclasses.fdef import FStore, Fdef, FType, Nullability, Queryability, Rea
 from jsonclasses.jfield import JField
 from jsonclasses.modifiers.required_modifier import RequiredModifier
 from jsonclasses.modifiers.default_modifier import DefaultModifier
+from jsonclasses_server.api_object import APIObject
 
 
 def ts(dest: Path, cgraph: CGraph):
@@ -15,7 +16,8 @@ def ts(dest: Path, cgraph: CGraph):
         dest.mkdir(parents=True)
     import_line = _import_line()
     interfaces = _gen_interfaces(cgraph, cgraph._map)
-    file_content = "\n".join([import_line, interfaces])
+    module = _gen_code(cgraph)
+    file_content = "\n".join([import_line, interfaces, module])
     with open(str(dest / 'index.ts'), 'w') as file:
         file.write(file_content)
 
@@ -110,11 +112,19 @@ def _gen_interfaces(cgraph: CGraph, cmap: dict[str, Cdef]) -> str:
                             idtype = _ts_type(cdef.primary_field.fdef, 'U') + ('[]' if field.fdef.ftype == FType.LIST else ('' if required else ' | null'))
                             update[idname] = idtype
             if field.fdef.queryability != Queryability.UNQUERYABLE:
-                qtype = _ts_type(field.fdef, 'Q')
-                query[field.json_name + '?'] = qtype
-                if qtype.endswith('Query'):
-                    if qtype not in required_queries:
-                        required_queries.append(qtype)
+                temp_field = field.fdef.fstore == FStore.TEMP
+                calc_field = field.fdef.fstore == FStore.CALCULATED
+                ref_field = field.fdef.fstore == FStore.LOCAL_KEY or field.fdef.fstore == FStore.FOREIGN_KEY
+                if temp_field or calc_field:
+                    pass
+                elif ref_field:
+                    pass
+                else:
+                    qtype = _ts_type(field.fdef, 'Q')
+                    query[field.json_name + '?'] = qtype
+                    if qtype.endswith('Query'):
+                        if qtype not in required_queries:
+                            required_queries.append(qtype)
         result_interface = _gen_interface(result_name, result)
         create_interface = _gen_interface(create_name, create)
         update_interface = _gen_interface(update_name, update)
@@ -270,3 +280,220 @@ def _date_query() -> str:
 
 def _import_line() -> str:
     return """import axios from 'axios'\nimport { stringify } from 'qsparser-js'\n"""
+
+
+def _gen_session_manager() -> str:
+    return """
+class SessionManager {
+
+    #sessionKey = '_jsonclasses_session'
+    #session: Session | undefined
+
+    constructor() {
+        const item = localStorage.getItem(this.#sessionKey)
+        if (item && item !== null && item !== '') {
+            this.#session = JSON.parse(item)
+        } else {
+            this.#session = undefined
+        }
+    }
+
+    setSession(session: Session | undefined | null) {
+        if (session) {
+            this.#session = session
+            localStorage.setItem(this.#sessionKey, JSON.stringify(session))
+        } else {
+            this.#session = undefined
+            localStorage.removeItem(this.#sessionKey)
+        }
+    }
+
+    hasSession(): boolean {
+        return this.#session !== undefined
+    }
+
+    getToken(): string | undefined {
+        return this.#session?.token
+    }
+
+    getSession(): Session | undefined {
+        return this.#session
+    }
+
+    clearSession() {
+        this.#session = undefined
+    }
+}
+    """.strip() + "\n"
+
+
+def _gen_request_manager() -> str:
+    return """
+class RequestManager {
+
+    #sessionManager: SessionManager;
+    #baseURL: string;
+
+    constructor(sessionManager: SessionManager, baseURL: string) {
+        this.#sessionManager = sessionManager
+        this.#baseURL = baseURL
+    }
+
+    get headers() {
+        const token = this.#sessionManager.hasSession() ? this.#sessionManager.getToken() : undefined
+        return token ? {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        } : undefined
+    }
+
+    qs(val: any): string | undefined {
+        if (!val) {
+            return undefined
+        }
+        if (Object.keys(val).length === 0) {
+            return undefined
+        }
+        return '?' + stringify(val)
+    }
+
+    async post<T, U, V>(url: string, input: T, query: V | undefined = undefined): Promise<U> {
+        const response = await axios.post(this.#baseURL + url + this.qs(query), input, this.headers)
+        return response.data.data
+    }
+
+    async patch<T, U, V>(url: string, input: T, query: V | undefined = undefined): Promise<U> {
+        const response = await axios.patch(this.#baseURL + url + this.qs(query), input, this.headers)
+        return response.data.data
+    }
+
+    async delete(url: string): Promise<void> {
+        await axios.delete(this.#baseURL + url, this.headers)
+        return
+    }
+
+    async get<U, V>(url: string, query: V | undefined = undefined): Promise<U> {
+        const response = await axios.get(this.#baseURL + url + this.qs(query), this.headers)
+        return response.data.data
+    }
+}
+    """.strip() + '\n'
+
+
+def _gen_api_private_vars(models: list[str]) -> str:
+    retval = ''
+    for model in models:
+        retval += '    #' + camelize(model, False) + 'Client: ' + camelize(model) + 'Client\n'
+    return retval
+
+
+def _gen_api_clients(models: list[str]) -> str:
+    retval = ''
+    for model in models:
+        retval += '        this.#' + camelize(model, False) + 'Client = new ' + camelize(model) + 'Client(this.#requestManager)\n'
+    return retval
+
+
+def _gen_api(models: list[str]) -> str:
+    return """
+class API {
+
+    #sessionManager: SessionManager;
+    #requestManager: RequestManager;
+""" + _gen_api_private_vars(models) + """
+
+    constructor() {
+        this.#sessionManager = new SessionManager()
+        this.#requestManager = new RequestManager(this.#sessionManager, 'http://localhost:5000')
+""" + _gen_api_clients(models) + """
+
+    }
+
+    get users(): UserClient {
+        return this.#userClient
+    }
+
+    signOut() {
+        this.#sessionManager.clearSession()
+    }
+}
+
+const api = new API()
+
+export default api
+    """.strip() + '\n'
+
+
+def _gen_model_client(cdef: Cdef) -> str:
+    if not hasattr(cdef.cls, 'aconf'):
+        return ''
+    aconf = cast(type[APIObject], cdef.cls).aconf
+    list = False
+    read = False
+    create = False
+    update = False
+    delete = False
+    if 'L' in aconf.actions:
+        list = True
+    if 'R' in aconf.actions:
+        read = True
+    if 'C' in aconf.actions:
+        create = True
+    if 'U' in aconf.actions:
+        update = True
+    if 'D' in aconf.actions:
+        delete = True
+
+    cls_name = cdef.cls.__name__
+    client_name = cls_name + 'Client'
+    url_name = aconf.name or aconf.cname_to_pname(cls_name)
+    head = ('class ' + client_name + ' {\n'
+        """
+    #requestManager: RequestManager;
+
+    constructor(requestManager: RequestManager) {
+        this.#requestManager = requestManager
+    }\n\n""")
+    tail = '}\n\n'
+    middle = ''
+    if create:
+        middle += (
+            "    create(input: " + cls_name + 'CreateInput, query?: ' + cls_name + 'Query): Promise<' + cls_name + '> {\n'
+            "        return this.#requestManager.post('/" + url_name + "', input, query)\n"
+            "    }\n\n"
+        )
+    if update:
+        middle += (
+            "    update(id: string, input: " + cls_name + 'UpdateInput, query?: ' + cls_name + 'Query): Promise<' + cls_name + '> {\n'
+            "        return this.#requestManager.patch(`/" + url_name + "/${id}`, input, query)\n"
+            "    }\n\n"
+        )
+    if delete:
+        middle += (
+            "    delete(id: string): Promise<void> {\n"
+            "        return this.#requestManager.delete(`/" + url_name + "/${id}`)\n"
+            "    }\n\n"
+        )
+    if read:
+        middle += (
+            "    read(id: string, query?: " + cls_name + 'Query): Promise<' + cls_name + '> {\n'
+            "        return this.#requestManager.get(`/" + url_name + "/${id}`, query)\n"
+            "    }\n\n"
+        )
+    if list:
+        middle += (
+            "    list(query?: " + cls_name + 'Query): Promise<' + cls_name + '[]> {\n'
+            "        return this.#requestManager.get('/" + url_name + "', query)\n"
+            "    }\n\n"
+        )
+    return head + middle + tail
+
+
+def _gen_code(cgraph: CGraph) -> str:
+    model_clients = [_gen_model_client(v) for _, v in cgraph._map.items()]
+    sm = _gen_session_manager()
+    rm = _gen_request_manager()
+    api = _gen_api([cdef.name for cdef in cgraph._map.values()])
+    model_clients.extend([sm, rm, api])
+    return "\n".join(model_clients)
