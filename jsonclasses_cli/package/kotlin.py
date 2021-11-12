@@ -1,6 +1,6 @@
 from pathlib import Path
-from jsonclasses_server.api_class import API
+from jsonclasses.cgraph import CGraph
 
 
-def kotlin(dest: Path, api: API):
+def kotlin(dest: Path, cgraph: CGraph):
     print("KOTLIN")

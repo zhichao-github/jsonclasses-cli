@@ -1,6 +1,6 @@
 from pathlib import Path
-from jsonclasses_server.api_class import API
+from jsonclasses.cgraph import CGraph
 
 
-def swift(dest: Path, api: API):
+def swift(dest: Path, cgraph: CGraph):
     print("SWIFT")
