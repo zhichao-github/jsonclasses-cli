@@ -1,6 +1,6 @@
 from pathlib import Path
 from typing import Literal, cast
-from inflection import camelize
+from inflection import camelize, underscore
 from jsonclasses.cdef import Cdef
 from jsonclasses.cgraph import CGraph
 from jsonclasses.fdef import FStore, Fdef, FType, Nullability, Queryability, ReadRule, WriteRule
@@ -331,8 +331,8 @@ def _gen_request_manager() -> str:
     return """
 class RequestManager {
 
-    #sessionManager: SessionManager;
-    #baseURL: string;
+    #sessionManager: SessionManager
+    #baseURL: string
 
     constructor(sessionManager: SessionManager, baseURL: string) {
         this.#sessionManager = sessionManager
@@ -395,26 +395,27 @@ def _gen_api_clients(models: list[str]) -> str:
     return retval
 
 
-def _gen_api(models: list[str]) -> str:
+def _gen_api_accessors(classes: list[type[APIObject]]) -> str:
+    retval = ''
+    for cls in classes:
+        retval += ('    get ' + camelize(underscore(cls.aconf.name or cls.aconf.cname_to_pname(cls.__name__)), False) + '(): ' + cls.__name__ + 'Client {\n'
+        '        return this.#' + camelize(cls.__name__, False) + 'Client\n'
+        '    }\n\n'
+        )
+    return retval
+
+def _gen_api(cgraph: CGraph) -> str:
+    models = [cdef.name for cdef in cgraph._map.values() if hasattr(cdef.cls, 'aconf')]
+    classes = [cdef.cls for cdef in cgraph._map.values() if hasattr(cdef.cls, 'aconf')]
     return """
 class API {
 
-    #sessionManager: SessionManager;
-    #requestManager: RequestManager;
-""" + _gen_api_private_vars(models) + """
-
-    constructor() {
+    #sessionManager: SessionManager
+    #requestManager: RequestManager
+""" + _gen_api_private_vars(models) + """\n    constructor() {
         this.#sessionManager = new SessionManager()
         this.#requestManager = new RequestManager(this.#sessionManager, 'http://localhost:5000')
-""" + _gen_api_clients(models) + """
-
-    }
-
-    get users(): UserClient {
-        return this.#userClient
-    }
-
-    signOut() {
+""" + _gen_api_clients(models) + """    }\n\n""" + _gen_api_accessors(classes) + """\n    signOut(): void {
         this.#sessionManager.clearSession()
     }
 }
@@ -450,7 +451,7 @@ def _gen_model_client(cdef: Cdef) -> str:
     url_name = aconf.name or aconf.cname_to_pname(cls_name)
     head = ('class ' + client_name + ' {\n'
         """
-    #requestManager: RequestManager;
+    #requestManager: RequestManager
 
     constructor(requestManager: RequestManager) {
         this.#requestManager = requestManager
@@ -494,6 +495,6 @@ def _gen_code(cgraph: CGraph) -> str:
     model_clients = [_gen_model_client(v) for _, v in cgraph._map.items()]
     sm = _gen_session_manager()
     rm = _gen_request_manager()
-    api = _gen_api([cdef.name for cdef in cgraph._map.values()])
+    api = _gen_api(cgraph)
     model_clients.extend([sm, rm, api])
     return "\n".join(model_clients)
