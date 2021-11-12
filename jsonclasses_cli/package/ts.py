@@ -28,7 +28,7 @@ def _gen_idref_modify(idtype: str) -> str:
 
 
 def _gen_interface(name: str, items: dict[str, str]) -> str:
-    return 'interface ' + name + '{\n' + "\n".join(["    " + k + ": " + v for k, v in items.items()]) + '\n}\n\n'
+    return 'interface ' + name + ' {\n' + "\n".join(["    " + k + ": " + v for k, v in items.items()]) + '\n}\n\n'
 
 
 def _gen_query_interface(name: str, items: dict[str, str]) -> str:
@@ -59,6 +59,7 @@ def _gen_interfaces(cgraph: CGraph, cmap: dict[str, Cdef]) -> str:
     required_queries: list[str] = []
     use_idref_modify: bool = False
     retval = ''
+    interfaces = ''
     for (name, cdef) in cmap.items():
         if not hasattr(cdef.cls, 'aconf'):
             continue
@@ -84,29 +85,29 @@ def _gen_interfaces(cgraph: CGraph, cmap: dict[str, Cdef]) -> str:
                         nonnull = True
             if field.fdef.read_rule != ReadRule.NO_READ:
                 if field.fdef.fstore != FStore.TEMP:
-                    result[field.json_name + '' if required else '?'] = _ts_type(field.fdef, 'R')
+                    result[field.json_name + ('' if required else '?')] = _ts_type(field.fdef, 'R')
                     if field.fdef.fstore == FStore.LOCAL_KEY:
                         rkes = cdef.jconf.ref_key_encoding_strategy
                         idname = cdef.jconf.key_encoding_strategy(rkes(field))
-                        idtype = _ts_type(cdef.primary_field.fdef.ftype, 'R') + '[]' if field.fdef.ftype == FType.LIST else ''
+                        idtype = _ts_type(cdef.primary_field.fdef, 'R') + ('[]' if field.fdef.ftype == FType.LIST else '')
                         result[idname] = idtype
             if field.fdef.write_rule != WriteRule.NO_WRITE:
                 only_create = required and field.fdef.write_rule == WriteRule.WRITE_ONCE
                 create_optional = (not required) or has_default
                 no_input = field.fdef.fstore == FStore.CALCULATED and field.fdef.setter is None
                 if not no_input:
-                    create[field.json_name + '?' if create_optional else ''] = _ts_type(field.fdef, 'C')
+                    create[field.json_name + ('?' if create_optional else '')] = _ts_type(field.fdef, 'C')
                     if field.fdef.fstore == FStore.LOCAL_KEY:
                         rkes = cdef.jconf.ref_key_encoding_strategy
                         idname = cdef.jconf.key_encoding_strategy(rkes(field))
-                        idtype = _ts_type(cdef.primary_field.fdef.ftype, 'C') + '[]' if field.fdef.ftype == FType.LIST else ''
+                        idtype = _ts_type(cdef.primary_field.fdef, 'C') + ('[]' if field.fdef.ftype == FType.LIST else '')
                         create[idname] = idtype
                     if not only_create:
-                        update[field.json_name + '?'] = _ts_type(field.fdef, 'U') + '' if required or nonnull else ' | null'
+                        update[field.json_name + '?'] = _ts_type(field.fdef, 'U') + ('' if required or nonnull else ' | null')
                         if field.fdef.fstore == FStore.LOCAL_KEY:
                             rkes = cdef.jconf.ref_key_encoding_strategy
                             idname = cdef.jconf.key_encoding_strategy(rkes(field))
-                            idtype = _ts_type(cdef.primary_field.fdef.ftype, 'U') + '[]' if field.fdef.ftype == FType.LIST else ('' if required else ' | null')
+                            idtype = _ts_type(cdef.primary_field.fdef, 'U') + ('[]' if field.fdef.ftype == FType.LIST else ('' if required else ' | null'))
                             update[idname] = idtype
             if field.fdef.queryability != Queryability.UNQUERYABLE:
                 qtype = _ts_type(field.fdef, 'Q')
@@ -118,11 +119,12 @@ def _gen_interfaces(cgraph: CGraph, cmap: dict[str, Cdef]) -> str:
         create_interface = _gen_interface(create_name, create)
         update_interface = _gen_interface(update_name, update)
         query_interface = _gen_query_interface(query_name, query)
-        retval = retval + _gen_enum_interfaces(cgraph, required_enums) + '\n'
-        retval = retval + _gen_queries(required_queries) + '\n'
-        retval = retval + result_interface + '\n' + create_interface + '\n' + update_interface + '\n' + query_interface + '\n'
-    print(retval)
+        interfaces = interfaces + result_interface + '\n' + create_interface + '\n' + update_interface + '\n' + query_interface + '\n'
+    retval = retval + _gen_enum_interfaces(cgraph, required_enums) + '\n'
+    retval = retval + _gen_queries(required_queries) + '\n'
+    retval = retval + interfaces
     return retval
+
 
 def _gen_enum_interfaces(cgraph: CGraph, enum_names: list[str]) -> str:
     interfaces: list[str] = []
@@ -137,6 +139,7 @@ def _gen_enum_interfaces(cgraph: CGraph, enum_names: list[str]) -> str:
             lines.append('    ' + ts_name + ' = ' + "'" + ts_val + "',\n")
         interfaces.append(line_one + "".join(lines) + last_line)
     return "\n".join(interfaces)
+
 
 def _ts_type(fdef: Fdef, mode: Literal['C', 'U', 'R', 'Q']) -> str:
     match fdef.ftype:
@@ -187,10 +190,12 @@ def _ts_type(fdef: Fdef, mode: Literal['C', 'U', 'R', 'Q']) -> str:
                 return fdef.inst_cls.__name__ + 'CreateInput'
             elif mode == 'U':
                 return fdef.inst_cls.__name__ + 'UpdateInput'
+            else:
+                return 'never'
         case FType.ANY:
             return 'any'
         case FType.UNION:
-            return " | ".join([_ts_type(t, mode) for t in fdef.raw_union_types])
+            return " | ".join([_ts_type(t.fdef, mode) for t in fdef.raw_union_types])
         case None:
             return "never"
 
