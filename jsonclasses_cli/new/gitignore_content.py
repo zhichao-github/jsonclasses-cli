@@ -1,5 +1,8 @@
 def gitignore_content() -> str:
     return """
+# packages
+/packages
+
 # python
 __pycache__
 
