@@ -49,7 +49,7 @@ def _gen_queries(query_names: list[str]) -> str:
         retval += _string_query() + '\n'
     if 'NumberQuery' in query_names:
         retval += _number_query() + '\n'
-    if 'BoolQuery' in query_names:
+    if 'BooleanQuery' in query_names:
         retval += _boolean_query() + '\n'
     if 'DateQuery' in query_names:
         retval += _date_query() + '\n'
@@ -307,7 +307,7 @@ def _date_query() -> str:
 
 
 def _import_line() -> str:
-    return """import axios from 'axios'\nimport { stringify } from 'qsparser-js'\n"""
+    return """import axios from 'axios'\nimport { stringify } from 'qsparser-js'\n\n"""
 
 
 def _gen_session_manager() -> str:
@@ -447,15 +447,15 @@ class API {
 """ + _gen_api_private_vars(models) + """\n    constructor() {
         this.#sessionManager = new SessionManager()
         this.#requestManager = new RequestManager(this.#sessionManager, 'http://localhost:5000')
-""" + _gen_api_clients(models) + """    }\n\n""" + _gen_api_accessors(classes) + """\n    signOut(): void {
+""" + _gen_api_clients(models) + """    }\n\n""" + _gen_api_accessors(classes) + """    signOut(): void {
         this.#sessionManager.clearSession()
     }
 }
 
 const api = new API()
 
-export default api
-    """.strip() + '\n'
+export default api\n
+    """
 
 
 def _gen_model_client(cdef: Cdef) -> str:
