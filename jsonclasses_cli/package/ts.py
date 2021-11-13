@@ -59,6 +59,7 @@ def _gen_queries(query_names: list[str]) -> str:
 def _gen_interfaces(cgraph: CGraph, cmap: dict[str, Cdef]) -> str:
     required_enums: list[str] = []
     required_queries: list[str] = []
+    session_names: list[str] = []
     use_idref_modify: bool = False
     retval = ''
     interfaces = ''
@@ -73,6 +74,12 @@ def _gen_interfaces(cgraph: CGraph, cmap: dict[str, Cdef]) -> str:
         update = {}
         query_name = name + 'Query'
         query = {}
+        use_session = hasattr(cdef.cls, 'auth_conf')
+        srname = cdef.cls.auth_conf.info.srname if use_session else ''
+        session_name = name + 'Session'
+        session_input_name = name + 'SessionInput'
+        session_identities = {}
+        session_bys = {}
         for field in cdef.fields:
             required = next((True for v in field.types.modifier.vs if isinstance(v, RequiredModifier)), False)
             has_default = next((True for v in field.types.modifier.vs if isinstance(v, DefaultModifier)), False)
@@ -125,14 +132,35 @@ def _gen_interfaces(cgraph: CGraph, cmap: dict[str, Cdef]) -> str:
                     if qtype.endswith('Query'):
                         if qtype not in required_queries:
                             required_queries.append(qtype)
+            if use_session:
+                if field.fdef.auth_identity:
+                    session_identities[field.json_name] = _ts_type(field.fdef, 'C')
+                elif field.fdef.auth_by:
+                    session_bys[field.json_name] = _ts_type(field.fdef, 'C')
         result_interface = _gen_interface(result_name, result)
         create_interface = _gen_interface(create_name, create)
         update_interface = _gen_interface(update_name, update)
         query_interface = _gen_query_interface(query_name, query)
-        interfaces = interfaces + result_interface + '\n' + create_interface + '\n' + update_interface + '\n' + query_interface + '\n'
+        if use_session:
+            if len(session_identities) > 1:
+                session_identities = {k + '?': v for k, v in session_identities.items()}
+            if len(session_bys) > 1:
+                session_bys = {k + '?': v for k, v in session_bys.items()}
+            session_input_interface = _gen_interface(session_input_name, session_identities | session_bys) + '\n'
+            session_result_interface = _gen_interface(session_name, {
+                'token': 'string',
+                srname: query_name
+            })
+            session_interface = session_input_interface + '\n' + session_result_interface
+            session_names.append(session_name)
+        else:
+            session_interface = ''
+        interfaces = interfaces + result_interface + '\n' + create_interface + '\n' + update_interface + '\n' + query_interface + '\n' + session_interface
     retval = retval + _gen_enum_interfaces(cgraph, required_enums) + '\n'
     retval = retval + _gen_queries(required_queries) + '\n'
     retval = retval + interfaces
+    if len(session_names) > 0:
+        retval += "\ntype Session = " + " | ".join(session_names) + "\n\n"
     return retval
 
 
@@ -348,6 +376,10 @@ class RequestManager {
         } : undefined
     }
 
+    get sessionManager(): SessionManager {
+        return this.#sessionManager
+    }
+
     qs(val: any): string | undefined {
         if (!val) {
             return undefined
@@ -445,7 +477,7 @@ def _gen_model_client(cdef: Cdef) -> str:
         update = True
     if 'D' in aconf.actions:
         delete = True
-
+    sign_in = hasattr(cdef.cls, 'auth_conf')
     cls_name = cdef.cls.__name__
     client_name = cls_name + 'Client'
     url_name = aconf.name or aconf.cname_to_pname(cls_name)
@@ -460,32 +492,40 @@ def _gen_model_client(cdef: Cdef) -> str:
     middle = ''
     if create:
         middle += (
-            "    create(input: " + cls_name + 'CreateInput, query?: ' + cls_name + 'Query): Promise<' + cls_name + '> {\n'
+            "    async create(input: " + cls_name + 'CreateInput, query?: ' + cls_name + 'Query): Promise<' + cls_name + '> {\n'
             "        return this.#requestManager.post('/" + url_name + "', input, query)\n"
             "    }\n\n"
         )
     if update:
         middle += (
-            "    update(id: string, input: " + cls_name + 'UpdateInput, query?: ' + cls_name + 'Query): Promise<' + cls_name + '> {\n'
+            "    async update(id: string, input: " + cls_name + 'UpdateInput, query?: ' + cls_name + 'Query): Promise<' + cls_name + '> {\n'
             "        return this.#requestManager.patch(`/" + url_name + "/${id}`, input, query)\n"
             "    }\n\n"
         )
     if delete:
         middle += (
-            "    delete(id: string): Promise<void> {\n"
+            "    async delete(id: string): Promise<void> {\n"
             "        return this.#requestManager.delete(`/" + url_name + "/${id}`)\n"
             "    }\n\n"
         )
     if read:
         middle += (
-            "    read(id: string, query?: " + cls_name + 'Query): Promise<' + cls_name + '> {\n'
+            "    async read(id: string, query?: " + cls_name + 'Query): Promise<' + cls_name + '> {\n'
             "        return this.#requestManager.get(`/" + url_name + "/${id}`, query)\n"
             "    }\n\n"
         )
     if list:
         middle += (
-            "    list(query?: " + cls_name + 'Query): Promise<' + cls_name + '[]> {\n'
+            "    async list(query?: " + cls_name + 'Query): Promise<' + cls_name + '[]> {\n'
             "        return this.#requestManager.get('/" + url_name + "', query)\n"
+            "    }\n\n"
+        )
+    if sign_in:
+        middle += (
+            "    async signIn(input: " + cls_name + 'SessionInput): Promise<' + cls_name + 'Session> {\n'
+            "        const session = await this.#requestManager.post<" + cls_name + 'SessionInput' + ", " + cls_name + 'Session' + ", " + cls_name  + "Query>('/" + url_name + "', input)\n"
+            "        this.#requestManager.sessionManager.setSession(session)\n"
+            "        return session\n"
             "    }\n\n"
         )
     return head + middle + tail
