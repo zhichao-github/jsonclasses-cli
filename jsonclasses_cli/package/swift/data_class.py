@@ -11,9 +11,12 @@ from .codable_struct import codable_struct, codable_struct_item
 from .codable_enum import codable_enum, codable_enum_item
 from .jtype_to_swift_type import jtype_to_swift_type
 from ...utils.join_lines import join_lines
+from ...utils.class_needs_api import class_needs_api
 
 
 def data_class(cdef: Cdef) -> str:
+    if not class_needs_api(cdef):
+        return ''
     return join_lines([
         _class_create_input(cdef),
         _class_update_input(cdef),
@@ -92,6 +95,9 @@ def _class_result_picks(cdef: Cdef) -> str:
             continue
         name = camelize(field.name, False)
         items.append(codable_enum_item(name, 'String', name))
+        if _is_field_local_key(field):
+            idname = _field_ref_id_name(field)
+            items.append(codable_enum_item(idname, 'String', idname))
     return codable_enum(to_result_picks(cdef), 'String', items)
 
 

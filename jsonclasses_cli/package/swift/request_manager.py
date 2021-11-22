@@ -83,5 +83,4 @@ def _session_setter() -> str:
     return '\n' + """
         if let session = SessionManager.shared.session {
             request.setValue("Bearer \(session.token)", forHTTPHeaderField: "Authorization")
-        }
-    """.strip('\n') + '\n'
+        }""".strip('\n')
