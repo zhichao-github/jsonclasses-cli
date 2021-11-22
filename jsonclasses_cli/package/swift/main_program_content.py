@@ -13,10 +13,10 @@ def main_program_content(cgraph: CGraph) -> str:
     return join_lines([
         import_lines(),
         string_query(),
-        sort_order(),
         int_query(),
         float_query(),
         # other type queries
+        sort_order(),
         *map(lambda e: data_enum(e), cgraph._enum_map.values()),
         *map(lambda c: data_class(c), cgraph._map.values())
     ], 2)

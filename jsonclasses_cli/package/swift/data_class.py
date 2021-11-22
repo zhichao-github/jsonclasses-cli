@@ -27,8 +27,15 @@ def _class_create_input(cdef: Cdef) -> str:
         optional = not _is_field_required_for_create(field)
         name = camelize(field.name, False)
         stype = jtype_to_swift_type(field.fdef, 'C')
+        local_key = _is_field_local_key(field)
+        if local_key:
+            optional = True
         item = codable_struct_item('public', 'var', name, stype, optional)
         items.append(item)
+        if local_key:
+            idname = _field_ref_id_name(field)
+            item = codable_struct_item('public', 'var', idname, 'String', True)
+            items.append(item)
     return codable_struct(to_create_input(cdef), items)
 
 
@@ -39,8 +46,13 @@ def _class_update_input(cdef: Cdef) -> str:
             continue
         name = camelize(field.name, False)
         stype = jtype_to_swift_type(field.fdef, 'U')
+        local_key = _is_field_local_key(field)
         item = codable_struct_item('public', 'var', name, stype, True)
         items.append(item)
+        if local_key:
+            idname = _field_ref_id_name(field)
+            item = codable_struct_item('public', 'var', idname, 'String', True)
+            items.append(item)
     return codable_struct(to_update_input(cdef), items)
 
 
@@ -103,3 +115,11 @@ def _field_can_update(field: JField) -> bool:
 
 def _field_can_read(field: JField) -> bool:
     return field.fdef.read_rule != ReadRule.NO_READ
+
+
+def _is_field_local_key(field: JField) -> bool:
+    return field.fdef.fstore == FStore.LOCAL_KEY
+
+
+def _field_ref_id_name(field: JField) -> str:
+    return field.cdef.jconf.ref_key_encoding_strategy(field)
