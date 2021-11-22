@@ -5,14 +5,15 @@ from ...utils.write_file import write_file
 
 
 def swift(dest: Path, cgraph: CGraph):
-    _create_dest_dir_if_needed(dest)
+    dest = _create_dest_dir_if_needed(dest)
     _generate_main_program_file(dest, cgraph)
 
 
-def _create_dest_dir_if_needed(dest: Path):
+def _create_dest_dir_if_needed(dest: Path) -> Path:
     dest = dest / 'packages' / 'swift'
     if not dest.is_dir():
         dest.mkdir(parents=True)
+    return dest
 
 
 def _generate_main_program_file(dest: Path, cgraph: CGraph):
