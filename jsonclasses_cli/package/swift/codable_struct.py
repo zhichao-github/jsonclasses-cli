@@ -6,8 +6,10 @@ def codable_struct(name: str, items: list[str]) -> str:
     lines = [_codable_struct_first_line(name), *items, "}"]
     return join_lines(lines, 1)
 
+
 def _codable_struct_first_line(name: str) -> str:
     return f"public struct {name}: Codable {'{'}"
+
 
 def codable_struct_item(access: Literal["public", "fileprivate", "private"],
                         mutability: Literal["let", "var"],
