@@ -2,6 +2,10 @@ def string_query():
     return """
 public enum StringQuery: Codable {
     case eq(_ value: String)
+    case gt(_ value: String)
+    case gte(_ value: String)
+    case lt(_ value: String)
+    case lte(_ value: String)
     case contains(_ value: String, mode: Mode = .default)
     case prefix(_ value: String, mode: Mode = .default)
     case suffix(_ value: String, mode: Mode = .default)
@@ -16,6 +20,10 @@ public enum StringQuery: Codable {
 
     public enum CodingKeys: String, CodingKey {
         case eq = "_eq"
+        case gt = "_gt"
+        case gte = "_gte"
+        case lt = "_lt"
+        case lte = "_lte"
         case contains = "_contains"
         case prefix = "_prefix"
         case suffix = "_suffix"
@@ -29,6 +37,14 @@ public enum StringQuery: Codable {
         let container = try! decoder.container(keyedBy: CodingKeys.self)
         if container.contains(.eq) {
             self = .eq(try! container.decode(String.self, forKey: .eq))
+        } else if container.contains(.gt) {
+            self = .gt(try! container.decode(String.self, forKey: .gt))
+        } else if container.contains(.gte) {
+            self = .gte(try! container.decode(String.self, forKey: .gte))
+        } else if container.contains(.lt) {
+            self = .lt(try! container.decode(String.self, forKey: .lt))
+        } else if container.contains(.lte) {
+            self = .lte(try! container.decode(String.self, forKey: .lte))
         } else if container.contains(.contains) {
             self = .contains(
                 try! container.decode(String.self, forKey: .contains),
@@ -63,6 +79,14 @@ public enum StringQuery: Codable {
         switch self {
         case .eq(let value):
             try! container.encode(value, forKey: .eq)
+        case .gt(let value):
+            try! container.encode(value, forKey: .gt)
+        case .gte(let value):
+            try! container.encode(value, forKey: .gte)
+        case .lt(let value):
+            try! container.encode(value, forKey: .lt)
+        case .lte(let value):
+            try! container.encode(value, forKey: .lte)
         case .contains(let value, let mode):
             try! container.encode(value, forKey: .contains)
             if mode != .default {
