@@ -98,7 +98,37 @@ def _class_result_picks(cdef: Cdef) -> str:
 def _class_query(cdef: Cdef) -> str:
     items: list[str] = []
     for field in cdef.fields:
-        pass
+        if not _is_field_queryable(field):
+            continue
+        name = camelize(field.name, False)
+        type = jtype_to_swift_type(field.fdef, 'Q')
+        if is_field_ref(field):
+            if not _is_field_local_key(field):
+                continue
+            idname = _field_ref_id_name(field)
+            item = codable_struct_item('public', 'var', idname, 'IDQuery', True, 'nil')
+            items.append(item)
+        else:
+            item = codable_struct_item('public', 'var', name, type, True, 'nil')
+            items.append(item)
+    sort_orders = array(to_sort_orders(cdef))
+    order = codable_struct_item(
+        'fileprivate', 'var', '_order', sort_orders, True, 'nil')
+    result_picks = array(to_result_picks(cdef))
+    pick = codable_struct_item(
+        'fileprivate', 'var', '_pick', result_picks, True, 'nil')
+    omit = codable_struct_item(
+        'fileprivate', 'var', '_omit', result_picks, True, 'nil')
+    limit = codable_struct_item(
+        'fileprivate', 'var', '_limit', 'Int', True, 'nil')
+    skip = codable_struct_item(
+        'fileprivate', 'var', '_skip', 'Int', True, 'nil')
+    page_no = codable_struct_item(
+        'fileprivate', 'var', '_pageNo', 'Int', True, 'nil')
+    page_size = codable_struct_item(
+        'fileprivate', 'var', '_pageSize', 'Int', True, 'nil')
+    operators = [order, pick, omit, limit, skip, page_no, page_size]
+    items.extend(operators)
     return codable_struct(to_query(cdef), items)
 
 
@@ -180,6 +210,8 @@ def _is_field_nonnull(field: JField) -> bool:
 
 
 def _is_field_queryable(field: JField) -> bool:
+    if field.fdef.read_rule == ReadRule.NO_READ:
+        return False
     return field.fdef.queryability != Queryability.UNQUERYABLE
 
 
@@ -222,3 +254,7 @@ def is_field_ref(field: JField) -> bool:
     if field.fdef.fstore == FStore.FOREIGN_KEY:
         return True
     return False
+
+
+def array(val: str) -> str:
+    return '[' + val + ']'
