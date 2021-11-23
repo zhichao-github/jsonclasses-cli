@@ -264,7 +264,14 @@ def _class_list_query(cdef: Cdef) -> str:
         'fileprivate', 'var', '_pageNo', 'Int', True, 'nil')
     page_size = codable_struct_item(
         'fileprivate', 'var', '_pageSize', 'Int', True, 'nil')
-    operators = [order, limit, skip, page_no, page_size, *_single_query_items(cdef)]
+    operators = [
+        order, limit, skip, page_no, page_size, *_single_query_items(cdef),
+        '\n',
+        join_lines([
+            _single_query_picks_omits(cdef),
+            _single_query_includes(cdef)
+        ], 2)
+    ]
     items.extend(operators)
     return codable_struct(to_list_query(cdef), items)
 
