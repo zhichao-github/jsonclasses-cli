@@ -140,7 +140,7 @@ def _class_include_enum(cdef: Cdef) -> str:
                 items.append((field.name, to_list_query(field.foreign_cdef)))
             else:
                 items.append((field.name, to_single_query(field.foreign_cdef)))
-    cases = join_lines(map(lambda i: codable_associated_item(i[0], i[1]), items), 1)
+    cases = join_lines(map(lambda i: codable_associated_item(i[0], i[1] + '?'), items), 1)
     coding_keys = join_lines([
         '    enum CodingKeys: String, CodingKey {',
         *map(lambda i: f'        case {i[0]} = "{i[0]}"', items),
