@@ -22,7 +22,8 @@ def data_class(cdef: Cdef) -> str:
         _class_update_input(cdef),
         _class_sort_orders(cdef),
         _class_result_picks(cdef),
-        _class_query(cdef),
+        _class_single_query(cdef),
+        _class_list_query(cdef),
         _class_result(cdef),
         _class_result(cdef, partial=True),
     ], 2)
@@ -101,7 +102,22 @@ def _class_result_picks(cdef: Cdef) -> str:
     return codable_enum(to_result_picks(cdef), 'String', items)
 
 
-def _class_query(cdef: Cdef) -> str:
+def _single_query_items(cdef: Cdef) -> list[str]:
+    result_picks = array(to_result_picks(cdef))
+    result_includes = array(to_include(cdef))
+    pick = codable_struct_item(
+        'fileprivate', 'var', '_pick', result_picks, True, 'nil')
+    omit = codable_struct_item(
+        'fileprivate', 'var', '_omit', result_picks, True, 'nil')
+    includes = codable_struct_item(
+        'fileprivate', 'var', '_includes', result_includes, True, 'nil')
+    return [pick, omit, includes]
+
+
+def _class_single_query(cdef: Cdef) -> str:
+    return codable_struct(to_single_query(cdef), _single_query_items(cdef))
+
+def _class_list_query(cdef: Cdef) -> str:
     items: list[str] = []
     for field in cdef.fields:
         if not _is_field_queryable(field):
@@ -120,11 +136,6 @@ def _class_query(cdef: Cdef) -> str:
     sort_orders = array(to_sort_orders(cdef))
     order = codable_struct_item(
         'fileprivate', 'var', '_order', sort_orders, True, 'nil')
-    result_picks = array(to_result_picks(cdef))
-    pick = codable_struct_item(
-        'fileprivate', 'var', '_pick', result_picks, True, 'nil')
-    omit = codable_struct_item(
-        'fileprivate', 'var', '_omit', result_picks, True, 'nil')
     limit = codable_struct_item(
         'fileprivate', 'var', '_limit', 'Int', True, 'nil')
     skip = codable_struct_item(
@@ -133,9 +144,9 @@ def _class_query(cdef: Cdef) -> str:
         'fileprivate', 'var', '_pageNo', 'Int', True, 'nil')
     page_size = codable_struct_item(
         'fileprivate', 'var', '_pageSize', 'Int', True, 'nil')
-    operators = [order, pick, omit, limit, skip, page_no, page_size]
+    operators = [order, limit, skip, page_no, page_size, *_single_query_items(cdef)]
     items.extend(operators)
-    return codable_struct(to_query(cdef), items)
+    return codable_struct(to_list_query(cdef), items)
 
 
 def _class_result(cdef: Cdef, partial: bool = False) -> str:
@@ -175,8 +186,16 @@ def to_result_picks(cdef: Cdef) -> str:
     return cdef.name + 'ResultPick'
 
 
-def to_query(cdef: Cdef) -> str:
-    return cdef.name + 'Query'
+def to_include(cdef: Cdef) -> str:
+    return cdef.name + 'Include'
+
+
+def to_single_query(cdef: Cdef) -> str:
+    return cdef.name + 'SingleQuery'
+
+
+def to_list_query(cdef: Cdef) -> str:
+    return cdef.name + 'FindQuery'
 
 
 def to_result(cdef: Cdef) -> str:

@@ -31,7 +31,7 @@ def jtype_to_swift_type(fdef: Fdef, mode: Literal['C', 'U', 'R', 'Q']) -> str:
                 return 'Date'
         case FType.DATETIME:
             if mode == 'Q':
-                return 'DateTimeQuery'
+                return 'DateQuery'
             else:
                 return 'Date'
         case FType.ENUM:
