@@ -36,5 +36,5 @@ def _case_group(item: str, desc: Callable[[str], str]) -> str:
         f'    case .{item}:',
         f'        return .{desc(item)}',
         f'    case .{desc(item)}:',
-        f'        return {item}'
+        f'        return .{item}'
     ])

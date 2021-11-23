@@ -2,13 +2,14 @@ from inflection import camelize
 from jsonclasses.cdef import Cdef
 from jsonclasses.jfield import JField
 from jsonclasses.fdef import (
-    Fdef, ReadRule, WriteRule, Queryability, FType, FStore, Nullability
+    ReadRule, WriteRule, Queryability, FType, FStore, Nullability
 )
 from jsonclasses.modifiers.required_modifier import RequiredModifier
 from jsonclasses.modifiers.default_modifier import DefaultModifier
 from .unary_sort_order import unary_sort_order
 from .codable_struct import codable_struct, codable_struct_item
-from .codable_enum import codable_enum, codable_enum_item
+from .codable_enum import codable_associated_item, codable_enum, codable_enum_item
+from .codable_class import CodableClassItem, codable_class, codable_class_item
 from .jtype_to_swift_type import jtype_to_swift_type
 from ...utils.join_lines import join_lines
 from ...utils.class_needs_api import class_needs_api
@@ -22,6 +23,8 @@ def data_class(cdef: Cdef) -> str:
         _class_update_input(cdef),
         _class_sort_orders(cdef),
         _class_result_picks(cdef),
+        _class_include_key_enums(cdef),
+        _class_include_enum(cdef),
         _class_single_query(cdef),
         _class_list_query(cdef),
         _class_result(cdef),
@@ -30,7 +33,7 @@ def data_class(cdef: Cdef) -> str:
 
 
 def _class_create_input(cdef: Cdef) -> str:
-    items: list[str] = []
+    items: list[CodableClassItem] = []
     for field in cdef.fields:
         if not _field_can_create(field):
             continue
@@ -40,30 +43,30 @@ def _class_create_input(cdef: Cdef) -> str:
         local_key = _is_field_local_key(field)
         if local_key:
             optional = True
-        item = codable_struct_item('public', 'var', name, stype, optional)
+        item = codable_class_item('public', 'var', name, stype, optional)
         items.append(item)
         if local_key:
             idname = _field_ref_id_name(field)
-            item = codable_struct_item('public', 'var', idname, 'String', True)
+            item = codable_class_item('public', 'var', idname, 'String', True)
             items.append(item)
-    return codable_struct(to_create_input(cdef), items)
+    return codable_class(to_create_input(cdef), items)
 
 
 def _class_update_input(cdef: Cdef) -> str:
-    items: list[str] = []
+    items: list[CodableClassItem] = []
     for field in cdef.fields:
         if not _field_can_update(field):
             continue
         name = camelize(field.name, False)
         stype = jtype_to_swift_type(field.fdef, 'U')
         local_key = _is_field_local_key(field)
-        item = codable_struct_item('public', 'var', name, stype, True)
+        item = codable_class_item('public', 'var', name, stype, True)
         items.append(item)
         if local_key:
             idname = _field_ref_id_name(field)
-            item = codable_struct_item('public', 'var', idname, 'String', True)
+            item = codable_class_item('public', 'var', idname, 'String', True)
             items.append(item)
-    return codable_struct(to_update_input(cdef), items)
+    return codable_class(to_update_input(cdef), items)
 
 
 def _class_sort_orders(cdef: Cdef) -> str:
@@ -102,6 +105,32 @@ def _class_result_picks(cdef: Cdef) -> str:
     return codable_enum(to_result_picks(cdef), 'String', items)
 
 
+def _class_include_key_enums(cdef: Cdef) -> str:
+    cname = cdef.name
+    enums: list[str] = []
+    for field in cdef.fields:
+        if is_field_ref(field):
+            enums.append(_class_include_key_enum(cname, field.name))
+    return join_lines(enums, 2)
+
+
+def _class_include_key_enum(cname: str, fname: str) -> str:
+    return codable_enum(cname + camelize(fname) + 'Include', 'Int', [
+        codable_enum_item(fname, 'Int', '1')
+    ])
+
+
+def _class_include_enum(cdef: Cdef) -> str:
+    items: list[str] = []
+    for field in cdef.fields:
+        if is_field_ref(field):
+            if field.fdef.ftype == FType.LIST:
+                items.append(codable_associated_item(field.name, to_list_query(field.foreign_cdef)))
+            else:
+                items.append(codable_associated_item(field.name, to_single_query(field.foreign_cdef)))
+    return codable_enum(to_include(cdef), None, items)
+
+
 def _single_query_items(cdef: Cdef) -> list[str]:
     result_picks = array(to_result_picks(cdef))
     result_includes = array(to_include(cdef))
@@ -116,6 +145,7 @@ def _single_query_items(cdef: Cdef) -> list[str]:
 
 def _class_single_query(cdef: Cdef) -> str:
     return codable_struct(to_single_query(cdef), _single_query_items(cdef))
+
 
 def _class_list_query(cdef: Cdef) -> str:
     items: list[str] = []
@@ -160,14 +190,14 @@ def _class_result(cdef: Cdef, partial: bool = False) -> str:
         name = camelize(field.name, False)
         stype = jtype_to_swift_type(field.fdef, 'R')
         local_key = _is_field_local_key(field)
-        item = codable_struct_item('public', 'let', name, stype, optional)
+        item = codable_class_item('public', 'let', name, stype, optional)
         items.append(item)
         if local_key:
             idname = _field_ref_id_name(field)
-            item = codable_struct_item('public', 'let', idname, 'String', optional)
+            item = codable_class_item('public', 'let', idname, 'String', optional)
             items.append(item)
     name = to_result(cdef) if not partial else to_result_partial(cdef)
-    return codable_struct(name, items)
+    return codable_class(name, items)
 
 
 def to_create_input(cdef: Cdef) -> str:
@@ -195,7 +225,7 @@ def to_single_query(cdef: Cdef) -> str:
 
 
 def to_list_query(cdef: Cdef) -> str:
-    return cdef.name + 'FindQuery'
+    return cdef.name + 'ListQuery'
 
 
 def to_result(cdef: Cdef) -> str:
@@ -266,7 +296,9 @@ def _is_field_local_key(field: JField) -> bool:
 
 
 def _field_ref_id_name(field: JField) -> str:
-    return field.cdef.jconf.ref_key_encoding_strategy(field)
+    rkes = field.cdef.jconf.ref_key_encoding_strategy
+    kes = field.cdef.jconf.key_encoding_strategy
+    return kes(rkes(field))
 
 
 def is_field_primary(field: JField) -> bool:

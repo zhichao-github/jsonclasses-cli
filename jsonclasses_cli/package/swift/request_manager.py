@@ -72,7 +72,7 @@ struct RequestManager {'{'}
         input: T? = nil,
         query: U? = nil
     ) async throws -> V? {'{'}
-        return try await request(method: "PATCH", url: url, input: input, query: query)!
+        return try await request(method: "GET", url: url, input: input, query: query)!
     {'}'}
 {'}'}
 
