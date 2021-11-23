@@ -17,6 +17,7 @@ from .sign_out import sign_out
 from .request_manager import request_manager
 from ...utils.join_lines import join_lines
 
+
 def main_program_content(cgraph: CGraph) -> str:
     session_classes = session_items(cgraph)
     use_session = len(session_classes) > 0

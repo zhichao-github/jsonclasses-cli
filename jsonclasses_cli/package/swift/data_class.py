@@ -120,15 +120,55 @@ def _class_include_key_enum(cname: str, fname: str) -> str:
     ])
 
 
+def _class_include_enum_init_if(idx: int, key: str, q: str) -> str:
+    return f"""
+        {'} else ' if idx > 0 else ''}if container.contains(.{key}) {'{'}
+            self = .{key}(try! container.decode({q}.self, forKey: .{key}))""".strip('\n')
+
+
+def _class_include_enum_encode_case(key: str) -> str:
+    return f"""
+        case .{key}(let value):
+            try! container.encode(value, forKey: .{key})""".strip('\n')
+
+
 def _class_include_enum(cdef: Cdef) -> str:
-    items: list[str] = []
+    items: list[tuple(str, str)] = []
     for field in cdef.fields:
         if is_field_ref(field):
             if field.fdef.ftype == FType.LIST:
-                items.append(codable_associated_item(field.name, to_list_query(field.foreign_cdef)))
+                items.append((field.name, to_list_query(field.foreign_cdef)))
             else:
-                items.append(codable_associated_item(field.name, to_single_query(field.foreign_cdef)))
-    return codable_enum(to_include(cdef), None, items)
+                items.append((field.name, to_single_query(field.foreign_cdef)))
+    cases = join_lines(map(lambda i: codable_associated_item(i[0], i[1]), items), 1)
+    coding_keys = join_lines([
+        '    enum CodingKeys: String, CodingKey {',
+        *map(lambda i: f'        case {i[0]} = "{i[0]}"', items),
+        '    }'
+    ], 1)
+    init = join_lines([
+        '    public init(from decoder: Decoder) throws {',
+        '        let container = try! decoder.container(keyedBy: CodingKeys.self)',
+        join_lines(map(lambda t: _class_include_enum_init_if(t[0], t[1][0], t[1][1]), enumerate(items))),
+        '        } else {',
+        '            throw NSError()',
+        '        }',
+        '    }'
+    ], 1)
+    encode = join_lines([
+        '    public func encode(to encoder: Encoder) throws {',
+        '        var container = encoder.container(keyedBy: CodingKeys.self)',
+        '        switch self {',
+        join_lines(map(lambda t: _class_include_enum_encode_case(t[0]), items)),
+        '        }',
+        '    }'
+    ])
+    return codable_enum(to_include(cdef), None, [join_lines([
+        cases,
+        coding_keys,
+        init,
+        encode
+    ], 2)])
 
 
 def _single_query_items(cdef: Cdef) -> list[str]:
