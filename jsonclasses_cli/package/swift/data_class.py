@@ -183,8 +183,33 @@ def _single_query_items(cdef: Cdef) -> list[str]:
     return [pick, omit, includes]
 
 
+def _single_query_picks_omits(cdef: Cdef) -> str:
+    rpname = to_result_picks(cdef)
+    return f"""
+    public static func pick(_ picks: [{rpname}]) -> Self {'{'}
+        return Self(_pick: picks)
+    {'}'}
+
+    public mutating func pick(_ picks: [{rpname}]) -> Self {'{'}
+        _pick = picks
+        return self
+    {'}'}
+
+    public static func omit(_ omits: [{rpname}]) -> Self {'{'}
+        return Self(_omits: omits)
+    {'}'}
+
+    public mutating func omit(_ omits: [{rpname}]) -> Self {'{'}
+        _omit = omits
+        return self
+    {'}'}""".strip('\n')
+
+
 def _class_single_query(cdef: Cdef) -> str:
-    return codable_struct(to_single_query(cdef), _single_query_items(cdef))
+    return codable_struct(to_single_query(cdef), [join_lines([
+        join_lines(_single_query_items(cdef), 1),
+        _single_query_picks_omits(cdef)
+    ], 2)])
 
 
 def _class_list_query(cdef: Cdef) -> str:
