@@ -205,10 +205,35 @@ def _single_query_picks_omits(cdef: Cdef) -> str:
     {'}'}""".strip('\n')
 
 
+def _single_query_include(key: str, itype: str, qtype: str) -> str:
+    return f"""
+    public static func include(_ ref: {itype}, query: {qtype}? = nil) -> Self {'{'}
+        return Self(_includes: [.{key}(query)])
+    {'}'}
+
+    public mutating func include(_ ref: {itype}, query: {qtype}? = nil) -> Self {'{'}
+        if _includes == nil {'{'} _includes = [] {'}'}
+        _includes!.append(.{key}(query))
+        return self
+    {'}'}""".strip('\n')
+
+
+def _single_query_includes(cdef: Cdef) -> str:
+    items: list[tuple(str, str, str)] = []
+    for field in cdef.fields:
+        if is_field_ref(field):
+            if field.fdef.ftype == FType.LIST:
+                items.append((field.name, cdef.name + camelize(field.name) + 'Include', to_list_query(field.foreign_cdef)))
+            else:
+                items.append((field.name, cdef.name + camelize(field.name) + 'Include', to_single_query(field.foreign_cdef)))
+    return join_lines(map(lambda i: _single_query_include(i[0], i[1], i[2]), items), 2)
+
+
 def _class_single_query(cdef: Cdef) -> str:
     return codable_struct(to_single_query(cdef), [join_lines([
         join_lines(_single_query_items(cdef), 1),
-        _single_query_picks_omits(cdef)
+        _single_query_picks_omits(cdef),
+        _single_query_includes(cdef)
     ], 2)])
 
 
