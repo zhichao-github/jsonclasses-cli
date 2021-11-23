@@ -88,7 +88,7 @@ def _class_sort_orders(cdef: Cdef) -> str:
         enum_items.append(codable_enum_item(desc_name, 'String', "-" + name))
     name = to_sort_orders(cdef)
     enum = codable_enum(name, 'String', enum_items)
-    unary = unary_sort_order(name, fnames, lambda s: s + 'Desc')
+    unary = unary_sort_order(name)
     return join_lines([enum, unary], 2)
 
 
