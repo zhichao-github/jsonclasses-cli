@@ -27,7 +27,9 @@ def main_program_content(cgraph: CGraph) -> str:
         float_query(),
         bool_query(),
         date_query(),
-        # other type queries
+        # id query
+        # list query
+        # dict query
         sort_order(),
         *map(lambda e: data_enum(e), cgraph._enum_map.values()),
         *map(lambda c: data_class(c), cgraph._map.values()),
