@@ -1,11 +1,6 @@
 from inflection import camelize
 from jsonclasses.cdef import Cdef
-from jsonclasses.jfield import JField
-from jsonclasses.fdef import (
-    ReadRule, WriteRule, Queryability, FType, FStore, Nullability
-)
-from jsonclasses.modifiers.required_modifier import RequiredModifier
-from jsonclasses.modifiers.default_modifier import DefaultModifier
+from jsonclasses.fdef import FType
 from .unary_sort_order import unary_sort_order
 from .codable_struct import codable_struct, codable_struct_item
 from .codable_enum import codable_associated_item, codable_enum, codable_enum_item
