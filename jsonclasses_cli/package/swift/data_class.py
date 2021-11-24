@@ -196,7 +196,7 @@ def _single_query_picks_omits(cdef: Cdef) -> str:
     {'}'}
 
     public static func omit(_ omits: [{rpname}]) -> Self {'{'}
-        return Self(_omits: omits)
+        return Self(_omit: omits)
     {'}'}
 
     public mutating func omit(_ omits: [{rpname}]) -> Self {'{'}
