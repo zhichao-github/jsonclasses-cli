@@ -29,7 +29,6 @@ def data_class(cdef: Cdef) -> str:
         _class_single_query(cdef),
         _class_list_query(cdef),
         _class_result(cdef),
-        _class_result(cdef, partial=True),
     ], 2)
 
 
@@ -345,14 +344,12 @@ def _class_list_query(cdef: Cdef) -> str:
     return codable_struct(to_list_query(cdef), items)
 
 
-def _class_result(cdef: Cdef, partial: bool = False) -> str:
+def _class_result(cdef: Cdef) -> str:
     items: list[str] = []
     for field in cdef.fields:
         if not _field_can_read(field):
             continue
         optional = not _is_field_required_for_read(field)
-        if partial:
-            optional = True
         name = camelize(field.name, False)
         stype = jtype_to_swift_type(field.fdef, 'R')
         local_key = _is_field_local_key(field)
@@ -362,12 +359,32 @@ def _class_result(cdef: Cdef, partial: bool = False) -> str:
             idname = _field_ref_id_name(field)
             item = codable_class_item('public', 'let', idname, 'String', optional)
             items.append(item)
-    name = to_result(cdef) if not partial else to_result_partial(cdef)
-    return codable_class(name, items)
+    name = to_result(cdef)
+    return codable_class(name, items, True)
 
 
-def to_result_partial(cdef: Cdef) -> str:
-    return 'Partial' + cdef.name
+def to_sort_orders(cdef: Cdef) -> str:
+    return cdef.name + 'SortOrder'
+
+
+def to_result_picks(cdef: Cdef) -> str:
+    return cdef.name + 'ResultPick'
+
+
+def to_include(cdef: Cdef) -> str:
+    return cdef.name + 'Include'
+
+
+def to_single_query(cdef: Cdef) -> str:
+    return cdef.name + 'SingleQuery'
+
+
+def to_list_query(cdef: Cdef) -> str:
+    return cdef.name + 'ListQuery'
+
+
+def to_result(cdef: Cdef) -> str:
+    return cdef.name
 
 
 def _is_field_required_for_create(field: JField) -> bool:
