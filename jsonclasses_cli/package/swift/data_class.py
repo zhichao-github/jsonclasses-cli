@@ -9,8 +9,15 @@ from jsonclasses.modifiers.default_modifier import DefaultModifier
 from .unary_sort_order import unary_sort_order
 from .codable_struct import codable_struct, codable_struct_item
 from .codable_enum import codable_associated_item, codable_enum, codable_enum_item
-from .codable_class import CodableClassItem, codable_class, codable_class_item
+from .codable_class import codable_class, codable_class_item
 from .jtype_to_swift_type import jtype_to_swift_type
+from .shared_utils import (
+    class_create_input_items, class_update_input_items, is_field_nonnull,
+    is_field_primary, is_field_local_key, field_can_read, field_can_create,
+    field_can_update, field_has_default, field_ref_id_name, is_field_queryable,
+    is_field_ref, is_field_required_for_create, is_field_required_for_read,
+    array
+)
 from ...utils.join_lines import join_lines
 from ...utils.package_utils import (
     to_create_input, to_update_input, to_single_query, to_list_query, to_result,
@@ -33,52 +40,23 @@ def data_class(cdef: Cdef) -> str:
 
 
 def _class_create_input(cdef: Cdef) -> str:
-    items: list[CodableClassItem] = []
-    for field in cdef.fields:
-        if not _field_can_create(field):
-            continue
-        optional = not _is_field_required_for_create(field)
-        name = camelize(field.name, False)
-        stype = jtype_to_swift_type(field.fdef, 'C')
-        local_key = _is_field_local_key(field)
-        if local_key:
-            optional = True
-        item = codable_class_item('public', 'var', name, stype, optional)
-        items.append(item)
-        if local_key:
-            idname = _field_ref_id_name(field)
-            item = codable_class_item('public', 'var', idname, 'String', True)
-            items.append(item)
-    return codable_class(to_create_input(cdef), items)
+    return codable_class(to_create_input(cdef), class_create_input_items(cdef))
 
 
 def _class_update_input(cdef: Cdef) -> str:
-    items: list[CodableClassItem] = []
-    for field in cdef.fields:
-        if not _field_can_update(field):
-            continue
-        name = camelize(field.name, False)
-        stype = jtype_to_swift_type(field.fdef, 'U')
-        local_key = _is_field_local_key(field)
-        item = codable_class_item('public', 'var', name, stype, True)
-        items.append(item)
-        if local_key:
-            idname = _field_ref_id_name(field)
-            item = codable_class_item('public', 'var', idname, 'String', True)
-            items.append(item)
-    return codable_class(to_update_input(cdef), items)
+    return codable_class(to_update_input(cdef), class_update_input_items(cdef))
 
 
 def _class_sort_orders(cdef: Cdef) -> str:
     fnames: list[str] = []
     for field in cdef.fields:
-        if not _is_field_queryable(field):
+        if not is_field_queryable(field):
             continue
         if is_field_primary(field):
             continue
         if is_field_ref(field):
             continue
-        if not _field_can_read(field):
+        if not field_can_read(field):
             continue
         fnames.append(camelize(field.name, False))
     enum_items: list[str] = []
@@ -95,12 +73,12 @@ def _class_sort_orders(cdef: Cdef) -> str:
 def _class_result_picks(cdef: Cdef) -> str:
     items: list[str] = []
     for field in cdef.fields:
-        if not _field_can_read(field):
+        if not field_can_read(field):
             continue
         name = camelize(field.name, False)
         items.append(codable_enum_item(name, 'String', name))
-        if _is_field_local_key(field):
-            idname = _field_ref_id_name(field)
+        if is_field_local_key(field):
+            idname = field_ref_id_name(field)
             items.append(codable_enum_item(idname, 'String', idname))
     return codable_enum(to_result_picks(cdef), 'String', items)
 
@@ -287,14 +265,14 @@ def _class_single_query(cdef: Cdef) -> str:
 def _list_query_items(cdef: Cdef) -> list[tuple[str, str]]:
     items: list[tuple[str, str]] = []
     for field in cdef.fields:
-        if not _is_field_queryable(field):
+        if not is_field_queryable(field):
             continue
         name = camelize(field.name, False)
         type = jtype_to_swift_type(field.fdef, 'Q')
         if is_field_ref(field):
-            if not _is_field_local_key(field):
+            if not is_field_local_key(field):
                 continue
-            idname = _field_ref_id_name(field)
+            idname = field_ref_id_name(field)
             items.append((idname, 'IDQuery'))
         else:
             items.append((name, type))
@@ -355,100 +333,17 @@ def _class_list_query(cdef: Cdef) -> str:
 def _class_result(cdef: Cdef) -> str:
     items: list[str] = []
     for field in cdef.fields:
-        if not _field_can_read(field):
+        if not field_can_read(field):
             continue
-        optional = not _is_field_required_for_read(field)
+        optional = not is_field_required_for_read(field)
         name = camelize(field.name, False)
         stype = jtype_to_swift_type(field.fdef, 'R')
-        local_key = _is_field_local_key(field)
+        local_key = is_field_local_key(field)
         item = codable_class_item('public', 'let', name, stype, optional)
         items.append(item)
         if local_key:
-            idname = _field_ref_id_name(field)
+            idname = field_ref_id_name(field)
             item = codable_class_item('public', 'let', idname, 'String', optional)
             items.append(item)
     name = to_result(cdef)
     return codable_class(name, items, True)
-
-
-def _is_field_required_for_create(field: JField) -> bool:
-    if _field_has_default(field):
-        return False
-    if _is_field_nonnull(field):
-        return True
-    return next((True for v in field.types.modifier.vs if isinstance(v, RequiredModifier)), False)
-
-
-def _is_field_required_for_read(field: JField) -> bool:
-    if _is_field_nonnull(field):
-        return True
-    return next((True for v in field.types.modifier.vs if isinstance(v, RequiredModifier)), False)
-
-
-def _field_has_default(field: JField) -> bool:
-    if _is_field_nonnull(field):
-        return True
-    return next((True for v in field.types.modifier.vs if isinstance(v, DefaultModifier)), False)
-
-
-def _is_field_nonnull(field: JField) -> bool:
-    if field.fdef.ftype == FType.LIST:
-        if field.fdef.fstore == FStore.LOCAL_KEY or field.fdef.fstore == FStore.FOREIGN_KEY:
-            if field.fdef.collection_nullability == Nullability.NONNULL:
-                return True
-    return False
-
-
-def _is_field_queryable(field: JField) -> bool:
-    if field.fdef.read_rule == ReadRule.NO_READ:
-        return False
-    if field.fdef.fstore == FStore.TEMP:
-        return False
-    return field.fdef.queryability != Queryability.UNQUERYABLE
-
-
-def _field_can_create(field: JField) -> bool:
-    return field.fdef.write_rule != WriteRule.NO_WRITE
-
-
-def _field_can_update(field: JField) -> bool:
-    if field.fdef.write_rule == WriteRule.NO_WRITE:
-        return False
-    if field.fdef.write_rule == WriteRule.WRITE_ONCE:
-        if _is_field_required_for_create(field):
-            return False
-    return True
-
-
-def _field_can_read(field: JField) -> bool:
-    if field.fdef.read_rule == ReadRule.NO_READ:
-        return False
-    if field.fdef.fstore == FStore.TEMP:
-        return False
-    return True
-
-
-def _is_field_local_key(field: JField) -> bool:
-    return field.fdef.fstore == FStore.LOCAL_KEY
-
-
-def _field_ref_id_name(field: JField) -> str:
-    rkes = field.cdef.jconf.ref_key_encoding_strategy
-    kes = field.cdef.jconf.key_encoding_strategy
-    return kes(rkes(field))
-
-
-def is_field_primary(field: JField) -> bool:
-    return field.fdef.primary
-
-
-def is_field_ref(field: JField) -> bool:
-    if field.fdef.fstore == FStore.LOCAL_KEY:
-        return True
-    if field.fdef.fstore == FStore.FOREIGN_KEY:
-        return True
-    return False
-
-
-def array(val: str) -> str:
-    return '[' + val + ']'

@@ -1,6 +1,8 @@
 from typing import cast
 from jsonclasses.cdef import Cdef
 from jsonclasses_server.aconf import AConf
+from jsonclasses_cli.package.swift.codable_class import CodableClassItem
+from jsonclasses_cli.package.swift.shared_utils import class_create_input_items
 
 from jsonclasses_cli.utils.join_lines import join_lines
 from ...utils.package_utils import (
@@ -18,7 +20,8 @@ def data_requests_and_clients(cdef: Cdef) -> str:
         _data_create_request(cdef, aconf.name) if 'C' in aconf.actions else '',
         _data_update_request(cdef, aconf.name) if 'U' in aconf.actions else '',
         _data_id_request(cdef, aconf.name) if 'R' in aconf.actions else '',
-        _data_find_request(cdef, aconf.name) if 'L' in aconf.actions else ''
+        _data_find_request(cdef, aconf.name) if 'L' in aconf.actions else '',
+        _data_client(cdef, aconf)
     ], 2)
 
 
@@ -154,3 +157,106 @@ def _data_find_request(cdef: Cdef, name: str) -> str:
         _data_single_request_common(cdef, False),
         '}'
     ], 1)
+
+
+def _data_client(cdef: Cdef, aconf: AConf) -> str:
+    return join_lines([
+        'public struct UserClient {',
+        '\n',
+        '    fileprivate init() { }',
+        '\n',
+        join_lines([
+            _data_client_creates(cdef, aconf),
+            _data_client_updates(cdef, aconf),
+            _data_client_delete(cdef, aconf),
+            _data_client_ids(cdef, aconf),
+            _data_client_finds(cdef, aconf),
+        ], 2),
+        '}'
+    ], 1)
+
+
+def _data_client_create_2(cdef: Cdef, items: list[CodableClassItem]) -> str:
+    if len(items) == 0:
+        return join_lines([
+            f'    public func create() -> {to_create_request(cdef)} {"{"}',
+            f'        let input = {to_create_input(cdef)}()',
+            '        return create(input)',
+            '    }'
+        ], 1)
+    last = len(items) - 1
+    return join_lines([
+        f'    public func create(',
+        *map(lambda i: f"        {i[1][2]}: {i[1][3]}{'? = nil' if i[1][4] else ''}{'' if i[0] == last else ', '}", enumerate(items)),
+        f'    ) -> {to_create_request(cdef)} {"{"}',
+        f'        let input = {to_create_input(cdef)}(',
+        *map(lambda i: f"            {i[1][2]}: {i[1][2]}{'' if i[0] == last else ','}", enumerate(items)),
+        '        )',
+        '        return create(input)',
+        '    }'
+    ], 1)
+
+
+def _data_client_create_4(cdef: Cdef, items: list[CodableClassItem]) -> str:
+    if len(items) == 0:
+        return join_lines([
+            f'    public func create() async throws -> {to_result(cdef)} {"{"}',
+            f'        let request: {to_create_request(cdef)} = self.create()',
+            '        return try await request.exec()',
+            '    }'
+        ], 1)
+    last = len(items) - 1
+    return join_lines([
+        f'    public func create(',
+        *map(lambda i: f"        {i[1][2]}: {i[1][3]}{'? = nil' if i[1][4] else ''}{'' if i[0] == last else ', '}", enumerate(items)),
+        f'    ) async throws -> {to_result(cdef)} {"{"}',
+        f'        let request: {to_create_request(cdef)} = self.create(',
+        *map(lambda i: f"            {i[1][2]}: {i[1][2]}{'' if i[0] == last else ','}", enumerate(items)),
+        '        )',
+        '        return try await request.exec()',
+        '    }'
+    ], 1)
+
+
+def _data_client_creates(cdef: Cdef, aconf: AConf) -> str:
+    if 'C' not in aconf.actions:
+        return ''
+    input_items = class_create_input_items(cdef)
+    return join_lines([
+        f'    public func create(_ input: {to_create_input(cdef)}) -> {to_create_request(cdef)} {"{"}',
+        f'        return {to_create_request(cdef)}(input: input)',
+        '    }',
+        '\n',
+        _data_client_create_2(cdef, input_items),
+        '\n',
+        f'    public func create(_ input: {to_create_input(cdef)}) -> {to_create_request(cdef)} {"{"}',
+        f'        let request: {to_create_request(cdef)} = self.create(input)',
+        '        return try await request.exec()',
+        '    }',
+        '\n',
+        _data_client_create_4(cdef, input_items)
+    ], 1)
+
+
+def _data_client_updates(cdef: Cdef, aconf: AConf) -> str:
+    if 'U' not in aconf.actions:
+        return ''
+    return ''
+
+
+def _data_client_delete(cdef: Cdef, aconf: AConf) -> str:
+    if 'D' not in aconf.actions:
+        return ''
+    return ''
+
+
+def _data_client_ids(cdef: Cdef, aconf: AConf) -> str:
+    if 'R' not in aconf.actions:
+        return ''
+    return ''
+
+
+def _data_client_finds(cdef: Cdef, aconf: AConf) -> str:
+    if 'L' not in aconf.actions:
+        return ''
+    return ''
