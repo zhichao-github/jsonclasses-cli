@@ -230,6 +230,29 @@ def _single_query_includes(cdef: Cdef) -> str:
     return join_lines(map(lambda i: _single_query_include(i[0], i[1], i[2]), items), 2)
 
 
+def _list_query_orders(order: str) -> str:
+    return f"""
+    public static func order(_ order: {order}) -> Self {"{"}
+        return Self(_order: [order])
+    {"}"}
+
+    public static func order(_ orders: [{order}]) -> Self {"{"}
+        return Self(_order: orders)
+    {"}"}
+
+    public mutating func order(_ order: {order}) -> Self {"{"}
+        if _order == nil {"{"} _order = [] {"}"}
+        _order!.append(order)
+        return self
+    {"}"}
+
+    public mutating func order(_ orders: [{order}]) -> Self {"{"}
+        if _order == nil {"{"} _order = [] {"}"}
+        _order!.append(contentsOf: orders)
+        return self
+    {"}"}
+    """
+
 def _class_single_query(cdef: Cdef) -> str:
     return codable_struct(to_single_query(cdef), [join_lines([
         join_lines(_single_query_items(cdef), 1),
@@ -280,7 +303,8 @@ def _list_query_find(cdef: Cdef) -> str:
 
 def _class_list_query(cdef: Cdef) -> str:
     items = list(map(lambda i: codable_struct_item('public', 'var', i[0], i[1], True, 'nil'), _list_query_items(cdef)))
-    sort_orders = array(to_sort_orders(cdef))
+    sort_order = to_sort_orders(cdef)
+    sort_orders = array(sort_order)
     order = codable_struct_item(
         'fileprivate', 'var', '_order', sort_orders, True, 'nil')
     limit = codable_struct_item(
@@ -296,6 +320,7 @@ def _class_list_query(cdef: Cdef) -> str:
         '\n',
         join_lines([
             _list_query_find(cdef),
+            _list_query_orders(sort_order),
             _single_query_picks_omits(cdef),
             _single_query_includes(cdef)
         ], 2)
