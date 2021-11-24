@@ -18,6 +18,18 @@ struct RequestManager {'{'}
         return URL(string: baseURL + url + qs(query))!
     {'}'}
 
+    func request(method: String, url: String) async throws {'{'}
+        let _: Int? = try await request(method: method, url: url, input: nil as Int?, query: nil as Int?)
+    {'}'}
+
+    func request<U: Codable, V: Codable>(
+        method: String,
+        url: String,
+        query: U? = nil
+    ) async throws -> V? {'{'}
+        return try await request(method: method, url: url, input: nil as Int?, query: query)
+    {'}'}
+
     func request<T: Codable, U: Codable, V: Codable>(
         method: String,
         url: String,
@@ -59,20 +71,15 @@ struct RequestManager {'{'}
         return try await request(method: "PATCH", url: url, input: input, query: query)!
     {'}'}
 
-    func delete<T: Codable, U: Codable, V: Codable>(
-        url: String,
-        input: T? = nil,
-        query: U? = nil
-    ) async throws -> V? {'{'}
-        try await request(method: "DELETE", url: url, input: input, query: query)
+    func delete(url: String) async throws {'{'}
+        try await request(method: "DELETE", url: url)
     {'}'}
 
-    func get<T: Codable, U: Codable, V: Codable>(
+    func get<U: Codable, V: Codable>(
         url: String,
-        input: T? = nil,
         query: U? = nil
     ) async throws -> V? {'{'}
-        return try await request(method: "GET", url: url, input: input, query: query)!
+        return try await request(method: "GET", url: url, query: query)!
     {'}'}
 {'}'}
 

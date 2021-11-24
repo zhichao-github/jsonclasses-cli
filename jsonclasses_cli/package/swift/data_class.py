@@ -12,6 +12,10 @@ from .codable_enum import codable_associated_item, codable_enum, codable_enum_it
 from .codable_class import CodableClassItem, codable_class, codable_class_item
 from .jtype_to_swift_type import jtype_to_swift_type
 from ...utils.join_lines import join_lines
+from ...utils.package_utils import (
+    to_create_input, to_update_input, to_single_query, to_list_query, to_result,
+    to_result_picks, to_include
+)
 
 
 def data_class(cdef: Cdef) -> str:
@@ -321,36 +325,8 @@ def _class_result(cdef: Cdef, partial: bool = False) -> str:
     return codable_class(name, items)
 
 
-def to_create_input(cdef: Cdef) -> str:
-    return cdef.name + 'CreateInput'
-
-
-def to_update_input(cdef: Cdef) -> str:
-    return cdef.name + 'UpdateInput'
-
-
 def to_sort_orders(cdef: Cdef) -> str:
     return cdef.name + 'SortOrder'
-
-
-def to_result_picks(cdef: Cdef) -> str:
-    return cdef.name + 'ResultPick'
-
-
-def to_include(cdef: Cdef) -> str:
-    return cdef.name + 'Include'
-
-
-def to_single_query(cdef: Cdef) -> str:
-    return cdef.name + 'SingleQuery'
-
-
-def to_list_query(cdef: Cdef) -> str:
-    return cdef.name + 'ListQuery'
-
-
-def to_result(cdef: Cdef) -> str:
-    return cdef.name
 
 
 def to_result_partial(cdef: Cdef) -> str:

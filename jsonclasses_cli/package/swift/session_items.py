@@ -1,7 +1,7 @@
 from typing import cast
 from jsonclasses.cgraph import CGraph
 from jsonclasses_server.auth_conf import AuthConf
-from ...utils.class_needs_session import class_needs_session
+from ...utils.package_utils import class_needs_session
 
 
 def session_items(cgraph: CGraph) -> dict[str, str]:
