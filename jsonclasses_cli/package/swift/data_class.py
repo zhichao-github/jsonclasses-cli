@@ -105,6 +105,17 @@ def _class_result_picks(cdef: Cdef) -> str:
     return codable_enum(to_result_picks(cdef), 'String', items)
 
 
+def _class_include_items(cdef: Cdef) -> list[tuple[str, str]]:
+    items: list[tuple[str, str]] = []
+    for field in cdef.fields:
+        if is_field_ref(field):
+            if field.fdef.ftype == FType.LIST:
+                items.append((field.name, to_list_query(field.foreign_cdef)))
+            else:
+                items.append((field.name, to_single_query(field.foreign_cdef)))
+    return items
+
+
 def _class_include_key_enums(cdef: Cdef) -> str:
     cname = cdef.name
     enums: list[str] = []
@@ -133,13 +144,9 @@ def _class_include_enum_encode_case(key: str) -> str:
 
 
 def _class_include_enum(cdef: Cdef) -> str:
-    items: list[tuple(str, str)] = []
-    for field in cdef.fields:
-        if is_field_ref(field):
-            if field.fdef.ftype == FType.LIST:
-                items.append((field.name, to_list_query(field.foreign_cdef)))
-            else:
-                items.append((field.name, to_single_query(field.foreign_cdef)))
+    items = _class_include_items(cdef)
+    if len(items) == 0:
+        return ""
     cases = join_lines(map(lambda i: codable_associated_item(i[0], i[1] + '?'), items), 1)
     coding_keys = join_lines([
         '    enum CodingKeys: String, CodingKey {',
@@ -180,6 +187,8 @@ def _single_query_items(cdef: Cdef) -> list[str]:
         'fileprivate', 'var', '_omit', result_picks, True, 'nil')
     includes = codable_struct_item(
         'fileprivate', 'var', '_includes', result_includes, True, 'nil')
+    if len(_class_include_items(cdef)) == 0:
+        includes = ""
     return [pick, omit, includes]
 
 
@@ -312,7 +321,6 @@ def _list_query_find(cdef: Cdef) -> str:
         '        return self',
         '    }'
     ], 1)
-
 
 
 def _class_list_query(cdef: Cdef) -> str:
