@@ -258,20 +258,27 @@ def _list_query_find(cdef: Cdef) -> str:
     items = _list_query_items(cdef)
     last = len(items) - 1
     arglist = lambda i: f"        {i[1][0]}: {i[1][1]}? = nil{'' if i[0] == last else ','}"
-    join_lines([
-        '    public static func find(',
+    return join_lines([
+        '    public static func where(',
         *map(arglist, enumerate(items)),
         '    ) -> Self {',
         '        return Self(',
         *map(lambda i: f"        {i[1][0]}: {i[1][0]}{'' if i[0] == last else ','}", enumerate(items)),
         '        )',
         '    }',
+        '\n',
+        '    public mutating func where(',
+        *map(arglist, enumerate(items)),
+        '    ) -> Self {',
+        *map(lambda i: f"        if {i[0]} != nil {'{'} self.{i[0]} = {i[0]} {'}'}", items),
+        '        return self',
+        '    }'
     ], 1)
 
 
 
 def _class_list_query(cdef: Cdef) -> str:
-    items: map(lambda i: codable_struct_item('public', 'var', i[0], i[1], True, 'nil'), _list_query_items(cdef))
+    items = list(map(lambda i: codable_struct_item('public', 'var', i[0], i[1], True, 'nil'), _list_query_items(cdef)))
     sort_orders = array(to_sort_orders(cdef))
     order = codable_struct_item(
         'fileprivate', 'var', '_order', sort_orders, True, 'nil')
