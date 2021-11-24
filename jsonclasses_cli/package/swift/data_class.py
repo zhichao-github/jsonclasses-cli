@@ -12,12 +12,9 @@ from .codable_enum import codable_associated_item, codable_enum, codable_enum_it
 from .codable_class import CodableClassItem, codable_class, codable_class_item
 from .jtype_to_swift_type import jtype_to_swift_type
 from ...utils.join_lines import join_lines
-from ...utils.class_needs_api import class_needs_api
 
 
 def data_class(cdef: Cdef) -> str:
-    if not class_needs_api(cdef):
-        return ''
     return join_lines([
         _class_create_input(cdef),
         _class_update_input(cdef),

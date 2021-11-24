@@ -16,6 +16,7 @@ from .user_default import user_default
 from .session_manager import session_manager
 from .sign_out import sign_out
 from .request_manager import request_manager
+from .data_requests_and_clients import data_requests_and_clients
 from ...utils.join_lines import join_lines
 
 
@@ -41,4 +42,5 @@ def main_program_content(cgraph: CGraph) -> str:
         session_manager() if use_session else '',
         sign_out(),
         request_manager('http://127.0.0.1:5000', use_session),
+        *map(lambda c: data_requests_and_clients(c), cgraph._map.values()),
     ], 2)
