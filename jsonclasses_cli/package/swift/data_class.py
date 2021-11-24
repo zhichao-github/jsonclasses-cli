@@ -237,8 +237,8 @@ def _class_single_query(cdef: Cdef) -> str:
     ], 2)])
 
 
-def _class_list_query(cdef: Cdef) -> str:
-    items: list[str] = []
+def _list_query_items(cdef: Cdef) -> list[tuple[str, str]]:
+    items: list[tuple[str, str]] = []
     for field in cdef.fields:
         if not _is_field_queryable(field):
             continue
@@ -248,11 +248,30 @@ def _class_list_query(cdef: Cdef) -> str:
             if not _is_field_local_key(field):
                 continue
             idname = _field_ref_id_name(field)
-            item = codable_struct_item('public', 'var', idname, 'IDQuery', True, 'nil')
-            items.append(item)
+            items.append((idname, 'IDQuery'))
         else:
-            item = codable_struct_item('public', 'var', name, type, True, 'nil')
-            items.append(item)
+            items.append((name, type))
+    return items
+
+
+def _list_query_find(cdef: Cdef) -> str:
+    items = _list_query_items(cdef)
+    last = len(items) - 1
+    arglist = lambda i: f"        {i[1][0]}: {i[1][1]}? = nil{'' if i[0] == last else ','}"
+    join_lines([
+        '    public static func find(',
+        *map(arglist, enumerate(items)),
+        '    ) -> Self {',
+        '        return Self(',
+        *map(lambda i: f"        {i[1][0]}: {i[1][0]}{'' if i[0] == last else ','}", enumerate(items)),
+        '        )',
+        '    }',
+    ], 1)
+
+
+
+def _class_list_query(cdef: Cdef) -> str:
+    items: map(lambda i: codable_struct_item('public', 'var', i[0], i[1], True, 'nil'), _list_query_items(cdef))
     sort_orders = array(to_sort_orders(cdef))
     order = codable_struct_item(
         'fileprivate', 'var', '_order', sort_orders, True, 'nil')
@@ -268,6 +287,7 @@ def _class_list_query(cdef: Cdef) -> str:
         order, limit, skip, page_no, page_size, *_single_query_items(cdef),
         '\n',
         join_lines([
+            _list_query_find(cdef),
             _single_query_picks_omits(cdef),
             _single_query_includes(cdef)
         ], 2)
@@ -363,6 +383,8 @@ def _is_field_nonnull(field: JField) -> bool:
 
 def _is_field_queryable(field: JField) -> bool:
     if field.fdef.read_rule == ReadRule.NO_READ:
+        return False
+    if field.fdef.fstore == FStore.TEMP:
         return False
     return field.fdef.queryability != Queryability.UNQUERYABLE
 
