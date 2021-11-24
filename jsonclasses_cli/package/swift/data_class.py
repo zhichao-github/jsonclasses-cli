@@ -259,7 +259,7 @@ def _list_query_find(cdef: Cdef) -> str:
     last = len(items) - 1
     arglist = lambda i: f"        {i[1][0]}: {i[1][1]}? = nil{'' if i[0] == last else ','}"
     return join_lines([
-        '    public static func where(',
+        '    public static func `where`(',
         *map(arglist, enumerate(items)),
         '    ) -> Self {',
         '        return Self(',
@@ -267,7 +267,7 @@ def _list_query_find(cdef: Cdef) -> str:
         '        )',
         '    }',
         '\n',
-        '    public mutating func where(',
+        '    public mutating func `where`(',
         *map(arglist, enumerate(items)),
         '    ) -> Self {',
         *map(lambda i: f"        if {i[0]} != nil {'{'} self.{i[0]} = {i[0]} {'}'}", items),
