@@ -14,7 +14,7 @@ from .jtype_to_swift_type import jtype_to_swift_type
 from ...utils.join_lines import join_lines
 from ...utils.package_utils import (
     to_create_input, to_update_input, to_single_query, to_list_query, to_result,
-    to_result_picks, to_include
+    to_result_picks, to_include, to_sort_orders
 )
 
 
@@ -242,7 +242,7 @@ def _list_query_orders(order: str) -> str:
 
     public mutating func order(_ order: {order}) -> Self {"{"}
         if _order == nil {"{"} _order = [] {"}"}
-        order!.append(order)
+        _order!.append(order)
         return self
     {"}"}
 
@@ -364,10 +364,6 @@ def _class_result(cdef: Cdef, partial: bool = False) -> str:
             items.append(item)
     name = to_result(cdef) if not partial else to_result_partial(cdef)
     return codable_class(name, items)
-
-
-def to_sort_orders(cdef: Cdef) -> str:
-    return cdef.name + 'SortOrder'
 
 
 def to_result_partial(cdef: Cdef) -> str:
