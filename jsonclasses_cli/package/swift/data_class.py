@@ -363,30 +363,6 @@ def _class_result(cdef: Cdef) -> str:
     return codable_class(name, items, True)
 
 
-def to_sort_orders(cdef: Cdef) -> str:
-    return cdef.name + 'SortOrder'
-
-
-def to_result_picks(cdef: Cdef) -> str:
-    return cdef.name + 'ResultPick'
-
-
-def to_include(cdef: Cdef) -> str:
-    return cdef.name + 'Include'
-
-
-def to_single_query(cdef: Cdef) -> str:
-    return cdef.name + 'SingleQuery'
-
-
-def to_list_query(cdef: Cdef) -> str:
-    return cdef.name + 'ListQuery'
-
-
-def to_result(cdef: Cdef) -> str:
-    return cdef.name
-
-
 def _is_field_required_for_create(field: JField) -> bool:
     if _field_has_default(field):
         return False
