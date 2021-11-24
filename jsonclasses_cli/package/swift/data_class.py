@@ -233,25 +233,40 @@ def _single_query_includes(cdef: Cdef) -> str:
 def _list_query_orders(order: str) -> str:
     return f"""
     public static func order(_ order: {order}) -> Self {"{"}
-        return Self(_order: [order])
-    {"}"}
+       return Self(_order: [order])
+    {"}"}
 
-    public static func order(_ orders: [{order}]) -> Self {"{"}
-        return Self(_order: orders)
-    {"}"}
+    public static func order(_ orders: [{order}]) -> Self {"{"}
+        return Self(_order: orders)
+    {"}"}
 
-    public mutating func order(_ order: {order}) -> Self {"{"}
-        if _order == nil {"{"} _order = [] {"}"}
-        _order!.append(order)
-        return self
-    {"}"}
+    public mutating func order(_ order: {order}) -> Self {"{"}
+        if _order == nil {"{"} _order = [] {"}"}
+        order!.append(order)
+        return self
+    {"}"}
 
-    public mutating func order(_ orders: [{order}]) -> Self {"{"}
-        if _order == nil {"{"} _order = [] {"}"}
-        _order!.append(contentsOf: orders)
-        return self
-    {"}"}
-    """
+    public mutating func order(_ orders: [{order}]) -> Self {"{"}
+        if _order == nil {"{"} _order = [] {"}"}
+        _order!.append(contentsOf: orders)
+        return self
+    {"}"}"""
+
+
+def _list_query_limit_skip_pn_ps() -> str:
+    lspp = ["limit", "skip", "pageNo", "pageSize"]
+    reslut = []
+    for i in lspp:
+        reslut.append(f"""
+    public static func {i}(_ {i}: Int) -> Self {"{"}
+        return Self(_{i}: {i})
+    {"}"}
+
+    public mutating func {i}(_ {i}: Int) -> Self {"{"}
+        _{i} = {i}
+        return self
+    {"}"}""".strip('\n'))
+    return join_lines(reslut)
 
 def _class_single_query(cdef: Cdef) -> str:
     return codable_struct(to_single_query(cdef), [join_lines([
@@ -321,6 +336,7 @@ def _class_list_query(cdef: Cdef) -> str:
         join_lines([
             _list_query_find(cdef),
             _list_query_orders(sort_order),
+            _list_query_limit_skip_pn_ps(),
             _single_query_picks_omits(cdef),
             _single_query_includes(cdef)
         ], 2)
