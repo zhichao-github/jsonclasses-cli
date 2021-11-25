@@ -2,7 +2,7 @@ from typing import cast
 from jsonclasses.cdef import Cdef
 from jsonclasses_server.aconf import AConf
 from jsonclasses_cli.package.swift.codable_class import CodableClassItem
-from jsonclasses_cli.package.swift.shared_utils import class_create_input_items
+from jsonclasses_cli.package.swift.shared_utils import class_create_input_items, class_update_input_items
 
 from jsonclasses_cli.utils.join_lines import join_lines
 from ...utils.package_utils import (
@@ -72,6 +72,7 @@ def _data_single_request_common(cdef: Cdef, single: bool = True) -> str:
     public mutating func pick(_ picks: [{to_result_picks(cdef)}]) -> Self {'{'}
         if query == nil {'{'} query = {to_single_query(cdef) if single else to_list_query(cdef)}() {'}'}
         query = query!.pick(picks)
+        return self
     {'}'}
 
     public mutating func pick(_ picks: [{to_result_picks(cdef)}]) async throws -> {to_result(cdef) if single else to_list_result(cdef)} {'{'}
@@ -82,6 +83,7 @@ def _data_single_request_common(cdef: Cdef, single: bool = True) -> str:
     public mutating func omit(_ omits: [{to_result_picks(cdef)}]) -> Self {'{'}
         if query == nil {'{'} query = {to_single_query(cdef) if single else to_list_query(cdef)}() {'}'}
         query = query!.omit(omits)
+        return self
     {'}'}
 
     public mutating func omit(_ omits: [{to_result_picks(cdef)}]) async throws -> {to_result(cdef) if single else to_list_result(cdef)} {'{'}
@@ -161,7 +163,7 @@ def _data_find_request(cdef: Cdef, name: str) -> str:
 
 def _data_client(cdef: Cdef, aconf: AConf) -> str:
     return join_lines([
-        'public struct UserClient {',
+        f'public struct {cdef.name}Client {"{"}',
         '\n',
         '    fileprivate init() { }',
         '\n',
@@ -229,7 +231,7 @@ def _data_client_creates(cdef: Cdef, aconf: AConf) -> str:
         '\n',
         _data_client_create_2(cdef, input_items),
         '\n',
-        f'    public func create(_ input: {to_create_input(cdef)}) -> {to_create_request(cdef)} {"{"}',
+        f'    public func create(_ input: {to_create_input(cdef)}) async throws -> {to_result(cdef)} {"{"}',
         f'        let request: {to_create_request(cdef)} = self.create(input)',
         '        return try await request.exec()',
         '    }',
@@ -238,10 +240,69 @@ def _data_client_creates(cdef: Cdef, aconf: AConf) -> str:
     ], 1)
 
 
+def _data_client_update_2(cdef: Cdef, items: list[CodableClassItem]) -> str:
+    if len(items) == 0:
+        return join_lines([
+            f'    public func update(_ id: String) -> {to_update_request(cdef)} {"{"}',
+            f'        let input = {to_update_input(cdef)}()',
+            '        return update(id, input)',
+            '    }'
+        ], 1)
+    last = len(items) - 1
+    return join_lines([
+        f'    public func update(',
+        '        _ id: String,',
+        *map(lambda i: f"        {i[1][2]}: {i[1][3]}{'? = nil' if i[1][4] else ''}{'' if i[0] == last else ', '}", enumerate(items)),
+        f'    ) -> {to_update_request(cdef)} {"{"}',
+        f'        let input = {to_update_input(cdef)}(',
+        *map(lambda i: f"            {i[1][2]}: {i[1][2]}{'' if i[0] == last else ','}", enumerate(items)),
+        '        )',
+        '        return update(id, input)',
+        '    }'
+    ], 1)
+
+
+def _data_client_update_4(cdef: Cdef, items: list[CodableClassItem]) -> str:
+    if len(items) == 0:
+        return join_lines([
+            f'    public func update(_ id: String) async throws -> {to_result(cdef)} {"{"}',
+            f'        let request: {to_update_request(cdef)} = self.update(id)',
+            '        return try await request.exec()',
+            '    }'
+        ], 1)
+    last = len(items) - 1
+    return join_lines([
+        f'    public func update(',
+        '        _ id: String,',
+        *map(lambda i: f"        {i[1][2]}: {i[1][3]}{'? = nil' if i[1][4] else ''}{'' if i[0] == last else ', '}", enumerate(items)),
+        f'    ) async throws -> {to_result(cdef)} {"{"}',
+        f'        let request: {to_update_request(cdef)} = self.update(',
+        '            id,',
+        *map(lambda i: f"            {i[1][2]}: {i[1][2]}{'' if i[0] == last else ','}", enumerate(items)),
+        '        )',
+        '        return try await request.exec()',
+        '    }'
+    ], 1)
+
+
 def _data_client_updates(cdef: Cdef, aconf: AConf) -> str:
     if 'U' not in aconf.actions:
         return ''
-    return ''
+    input_items = class_update_input_items(cdef)
+    return join_lines([
+        f'    public func update(_ id: String, _ input: {to_update_input(cdef)}) -> {to_update_request(cdef)} {"{"}',
+        f'        return {to_update_request(cdef)}(id: id, input: input)',
+        '    }',
+        '\n',
+        _data_client_update_2(cdef, input_items),
+        '\n',
+        f'    public func update(_ id: String, _ input: {to_update_input(cdef)}) async throws -> {to_result(cdef)} {"{"}',
+        f'        let request: {to_update_request(cdef)} = self.update(id, input)',
+        '        return try await request.exec()',
+        '    }',
+        '\n',
+        _data_client_update_4(cdef, input_items)
+    ], 1)
 
 
 def _data_client_delete(cdef: Cdef, aconf: AConf) -> str:
