@@ -403,9 +403,8 @@ def _data_client_find_2(cdef: Cdef, items: list[tuple[str, str]]) -> str:
         '    public func find(',
         *map(lambda i: f"        {i[1][0]}: {i[1][1]}? = nil{'' if i[0] == last else ','}", enumerate(items)),
         f'    ) -> {to_list_request(cdef)} {"{"}',
-        f'        let query = {to_list_query(cdef)}(',
-        *map(lambda i: f"            {i[1][0]}: {i[1][0]}{'' if i[0] == last else ','}", enumerate(items)),
-        '        )',
+        f'        let query = {to_list_query(cdef)}()',
+        *map(lambda i: f"        query.{i[0]} = {i[0]}", items),
         f'        return {to_list_request(cdef)}(query: query)',
         '    }'
     ], 1)
@@ -417,9 +416,8 @@ def _data_client_find_4(cdef: Cdef, items: list[tuple[str, str]]) -> str:
         '    public func find(',
         *map(lambda i: f"        {i[1][0]}: {i[1][1]}? = nil{'' if i[0] == last else ','}", enumerate(items)),
         f'    ) async throws -> {to_list_result(cdef)} {"{"}',
-        f'        let query = {to_list_query(cdef)}(',
-        *map(lambda i: f"            {i[1][0]}: {i[1][0]}{'' if i[0] == last else ','}", enumerate(items)),
-        '        )',
+        f'        let query = {to_list_query(cdef)}()',
+        *map(lambda i: f"        query.{i[0]} = {i[0]}", items),
         f'        let request = {to_list_request(cdef)}(query: query)',
         '        return try await request.exec()',
         '    }'
