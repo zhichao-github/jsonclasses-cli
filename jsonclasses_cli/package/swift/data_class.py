@@ -11,7 +11,7 @@ from .shared_utils import (
     is_field_primary, is_field_local_key, field_can_read, field_can_create,
     field_can_update, field_has_default, field_ref_id_name, is_field_queryable,
     is_field_ref, is_field_required_for_create, is_field_required_for_read,
-    array, list_query_items
+    array, list_query_items, class_include_items
 )
 from ...utils.join_lines import join_lines
 from ...utils.package_utils import (
@@ -78,17 +78,6 @@ def _class_result_picks(cdef: Cdef) -> str:
     return codable_enum(to_result_picks(cdef), 'String', items)
 
 
-def _class_include_items(cdef: Cdef) -> list[tuple[str, str]]:
-    items: list[tuple[str, str]] = []
-    for field in cdef.fields:
-        if is_field_ref(field):
-            if field.fdef.ftype == FType.LIST:
-                items.append((field.name, to_list_query(field.foreign_cdef)))
-            else:
-                items.append((field.name, to_single_query(field.foreign_cdef)))
-    return items
-
-
 def _class_include_key_enums(cdef: Cdef) -> str:
     cname = cdef.name
     enums: list[str] = []
@@ -117,7 +106,7 @@ def _class_include_enum_encode_case(key: str) -> str:
 
 
 def _class_include_enum(cdef: Cdef) -> str:
-    items = _class_include_items(cdef)
+    items = class_include_items(cdef)
     if len(items) == 0:
         return ""
     cases = join_lines(map(lambda i: codable_associated_item(i[0], i[1] + '?'), items), 1)
@@ -158,10 +147,11 @@ def _single_query_items(cdef: Cdef) -> list[str]:
         'fileprivate', 'var', '_pick', result_picks, True, 'nil')
     omit = codable_struct_item(
         'fileprivate', 'var', '_omit', result_picks, True, 'nil')
-    includes = codable_struct_item(
-        'fileprivate', 'var', '_includes', result_includes, True, 'nil')
-    if len(_class_include_items(cdef)) == 0:
+    if len(class_include_items(cdef)) == 0:
         includes = ""
+    else:
+        includes = codable_struct_item(
+            'fileprivate', 'var', '_includes', result_includes, True, 'nil')
     return [pick, omit, includes]
 
 
@@ -189,11 +179,11 @@ def _single_query_picks_omits(cdef: Cdef) -> str:
 
 def _single_query_include(key: str, itype: str, qtype: str) -> str:
     return f"""
-    public static func include(_ ref: {itype}, query: {qtype}? = nil) -> Self {'{'}
+    public static func include(_ ref: {itype}, _ query: {qtype}? = nil) -> Self {'{'}
         return Self(_includes: [.{key}(query)])
     {'}'}
 
-    public mutating func include(_ ref: {itype}, query: {qtype}? = nil) -> Self {'{'}
+    public mutating func include(_ ref: {itype}, _ query: {qtype}? = nil) -> Self {'{'}
         if _includes == nil {'{'} _includes = [] {'}'}
         _includes!.append(.{key}(query))
         return self

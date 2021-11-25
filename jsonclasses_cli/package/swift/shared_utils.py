@@ -8,6 +8,18 @@ from jsonclasses.modifiers.required_modifier import RequiredModifier
 from jsonclasses.modifiers.default_modifier import DefaultModifier
 from .codable_class import CodableClassItem, codable_class_item
 from .jtype_to_swift_type import jtype_to_swift_type
+from ...utils.package_utils import to_list_query, to_single_query
+
+
+def class_include_items(cdef: Cdef) -> list[tuple[str, str]]:
+    items: list[tuple[str, str]] = []
+    for field in cdef.fields:
+        if is_field_ref(field):
+            if field.fdef.ftype == FType.LIST:
+                items.append((field.name, to_list_query(field.foreign_cdef)))
+            else:
+                items.append((field.name, to_single_query(field.foreign_cdef)))
+    return items
 
 
 def list_query_items(cdef: Cdef) -> list[tuple[str, str]]:

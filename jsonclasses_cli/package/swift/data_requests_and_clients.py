@@ -3,7 +3,7 @@ from inflection import camelize, underscore
 from jsonclasses.cdef import Cdef
 from jsonclasses_server.aconf import AConf
 from .codable_class import CodableClassItem
-from .shared_utils import class_create_input_items, class_update_input_items, list_query_items
+from .shared_utils import class_create_input_items, class_include_items, class_update_input_items, list_query_items
 from ...utils.join_lines import join_lines
 from ...utils.package_utils import (
     class_needs_api, class_needs_session, to_create_input, to_create_request, to_delete_request,
@@ -77,8 +77,8 @@ def _data_find_request_method(cdef: Cdef) -> str:
     """.strip('\n')
 
 
-def _data_single_request_common(cdef: Cdef, single: bool = True) -> str:
-    return f"""
+def _data_query_request_common(cdef: Cdef, single: bool = True) -> str:
+    return join_lines([f"""
     public mutating func pick(_ picks: [{to_result_picks(cdef)}]) -> Self {'{'}
         if query == nil {'{'} query = {to_single_query(cdef) if single else to_list_query(cdef)}() {'}'}
         query = query!.pick(picks)
@@ -99,7 +99,30 @@ def _data_single_request_common(cdef: Cdef, single: bool = True) -> str:
     public mutating func omit(_ omits: [{to_result_picks(cdef)}]) async throws -> {to_result(cdef) if single else to_list_result(cdef)} {'{'}
         self = self.omit(omits)
         return try await self.exec()
-    {'}'}""".strip('\n')
+    {'}'}""".strip('\n'), _data_query_request_includes(cdef, single)], 2)
+
+
+def _data_query_request_include(cdef: Cdef, item: tuple[str, str], single: bool = True) -> str:
+    return f"""
+    public mutating func include(_ ref: {cdef.name}{camelize(item[0])}Include, _ query: {item[1]}? = nil) -> Self {'{'}
+        if self.query == nil {'{'} self.query = {to_single_query(cdef) if single else to_list_query(cdef)}() {'}'}
+        self.query = self.query!.include(ref, query)
+        return self
+    {'}'}
+
+    public mutating func include(_ ref: {cdef.name}{camelize(item[0])}Include, _ query: {item[1]}? = nil) async throws -> {to_result(cdef) if single else to_list_result(cdef)} {'{'}
+        if self.query == nil {'{'} self.query = {to_single_query(cdef) if single else to_list_query(cdef)}() {'}'}
+        self.query = self.query!.include(ref, query)
+        return try await self.exec()
+    {'}'}
+    """.strip('\n')
+
+
+def _data_query_request_includes(cdef: Cdef, single: bool = True) -> str:
+    items = class_include_items(cdef)
+    if len(items) == 0:
+        return ''
+    return join_lines(map(lambda i: _data_query_request_include(cdef, i, single), items), 2)
 
 
 def _data_create_request(cdef: Cdef, name: str) -> str:
@@ -114,7 +137,7 @@ def _data_create_request(cdef: Cdef, name: str) -> str:
         f"        )",
         "    }",
         '\n',
-        _data_single_request_common(cdef),
+        _data_query_request_common(cdef),
         '}'
     ], 1)
 
@@ -132,7 +155,7 @@ def _data_update_request(cdef: Cdef, name: str) -> str:
         f"        )",
         "    }",
         '\n',
-        _data_single_request_common(cdef),
+        _data_query_request_common(cdef),
         '}'
     ], 1)
 
@@ -163,7 +186,7 @@ def _data_id_request(cdef: Cdef, name: str) -> str:
         f"        )!",
         "    }",
         '\n',
-        _data_single_request_common(cdef),
+        _data_query_request_common(cdef),
         '}'
     ], 1)
 
@@ -180,7 +203,7 @@ def _data_find_request(cdef: Cdef, name: str) -> str:
         "    }",
         '\n',
         _data_find_request_method(cdef),
-        _data_single_request_common(cdef, False),
+        _data_query_request_common(cdef, False),
         '}'
     ], 1)
 
