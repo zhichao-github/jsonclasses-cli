@@ -23,7 +23,7 @@ def _create_dest_dir_if_needed(dest: Path) -> Path:
 
 
 def _generate_main_program_file(dest: Path, cgraph: CGraph):
-    write_file(dest / 'API.swift', main_program_content(cgraph))
+    write_file(dest / 'Sources' / 'API' / 'API.swift', main_program_content(cgraph))
 
 
 def _generate_package_file(dest: Path):
