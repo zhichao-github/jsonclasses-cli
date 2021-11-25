@@ -2,7 +2,7 @@ from inflection import camelize
 from jsonclasses.cdef import Cdef
 from jsonclasses.fdef import FType
 from .unary_sort_order import unary_sort_order
-from .codable_struct import codable_struct, codable_struct_item
+from .codable_struct import codable_struct, codable_struct_class, codable_struct_item
 from .codable_enum import codable_associated_item, codable_enum, codable_enum_item
 from .codable_class import codable_class, codable_class_item
 from .jtype_to_swift_type import jtype_to_swift_type
@@ -155,42 +155,48 @@ def _single_query_items(cdef: Cdef) -> list[str]:
     return [pick, omit, includes]
 
 
-def _single_query_picks_omits(cdef: Cdef) -> str:
+def _single_query_picks_omits(cdef: Cdef, single: bool = True) -> str:
     rpname = to_result_picks(cdef)
     return f"""
-    public static func pick(_ picks: [{rpname}]) -> Self {'{'}
-        return Self(_pick: picks)
+    public static func pick(_ picks: [{rpname}]) -> {to_single_query(cdef) if single else to_list_query(cdef)} {'{'}
+        let instance = {to_single_query(cdef) if single else to_list_query(cdef)}()
+        instance._pick = picks
+        return instance
     {'}'}
 
-    public mutating func pick(_ picks: [{rpname}]) -> Self {'{'}
+    public func pick(_ picks: [{rpname}]) -> {to_single_query(cdef) if single else to_list_query(cdef)} {'{'}
         _pick = picks
         return self
     {'}'}
 
-    public static func omit(_ omits: [{rpname}]) -> Self {'{'}
-        return Self(_omit: omits)
+    public static func omit(_ omits: [{rpname}]) -> {to_single_query(cdef) if single else to_list_query(cdef)} {'{'}
+        let instance = {to_single_query(cdef) if single else to_list_query(cdef)}()
+        instance._omit = omits
+        return instance
     {'}'}
 
-    public mutating func omit(_ omits: [{rpname}]) -> Self {'{'}
+    public func omit(_ omits: [{rpname}]) -> {to_single_query(cdef) if single else to_list_query(cdef)} {'{'}
         _omit = omits
         return self
     {'}'}""".strip('\n')
 
 
-def _single_query_include(key: str, itype: str, qtype: str) -> str:
+def _single_query_include(cdef: Cdef, key: str, itype: str, qtype: str, single: bool = True) -> str:
     return f"""
-    public static func include(_ ref: {itype}, _ query: {qtype}? = nil) -> Self {'{'}
-        return Self(_includes: [.{key}(query)])
+    public static func include(_ ref: {itype}, _ query: {qtype}? = nil) -> {to_single_query(cdef) if single else to_list_query(cdef)} {'{'}
+        let instance = {to_single_query(cdef) if single else to_list_query(cdef)}()
+        instance._includes = [.{key}(query)]
+        return instance
     {'}'}
 
-    public mutating func include(_ ref: {itype}, _ query: {qtype}? = nil) -> Self {'{'}
+    public func include(_ ref: {itype}, _ query: {qtype}? = nil) -> {to_single_query(cdef) if single else to_list_query(cdef)} {'{'}
         if _includes == nil {'{'} _includes = [] {'}'}
         _includes!.append(.{key}(query))
         return self
     {'}'}""".strip('\n')
 
 
-def _single_query_includes(cdef: Cdef) -> str:
+def _single_query_includes(cdef: Cdef, single: bool = True) -> str:
     items: list[tuple(str, str, str)] = []
     for field in cdef.fields:
         if is_field_ref(field):
@@ -198,52 +204,58 @@ def _single_query_includes(cdef: Cdef) -> str:
                 items.append((field.name, cdef.name + camelize(field.name) + 'Include', to_list_query(field.foreign_cdef)))
             else:
                 items.append((field.name, cdef.name + camelize(field.name) + 'Include', to_single_query(field.foreign_cdef)))
-    return join_lines(map(lambda i: _single_query_include(i[0], i[1], i[2]), items), 2)
+    return join_lines(map(lambda i: _single_query_include(cdef, i[0], i[1], i[2], single), items), 2)
 
 
-def _list_query_orders(order: str) -> str:
+def _list_query_orders(order: str, cdef: Cdef, single: bool = True) -> str:
     return f"""
-    public static func order(_ order: {order}) -> Self {"{"}
-       return Self(_order: [order])
+    public static func order(_ order: {order}) -> {to_single_query(cdef) if single else to_list_query(cdef)} {"{"}
+        let instance = {to_single_query(cdef) if single else to_list_query(cdef)}()
+        instance._order = [order]
+        return instance
     {"}"}
 
-    public static func order(_ orders: [{order}]) -> Self {"{"}
-        return Self(_order: orders)
+    public static func order(_ orders: [{order}]) -> {to_single_query(cdef) if single else to_list_query(cdef)} {"{"}
+        let instance = {to_single_query(cdef) if single else to_list_query(cdef)}()
+        instance._order = orders
+        return instance
     {"}"}
 
-    public mutating func order(_ order: {order}) -> Self {"{"}
+    public func order(_ order: {order}) -> {to_single_query(cdef) if single else to_list_query(cdef)} {"{"}
         if _order == nil {"{"} _order = [] {"}"}
         _order!.append(order)
         return self
     {"}"}
 
-    public mutating func order(_ orders: [{order}]) -> Self {"{"}
+    public func order(_ orders: [{order}]) -> {to_single_query(cdef) if single else to_list_query(cdef)} {"{"}
         if _order == nil {"{"} _order = [] {"}"}
         _order!.append(contentsOf: orders)
         return self
     {"}"}"""
 
 
-def _list_query_limit_skip_pn_ps() -> str:
+def _list_query_limit_skip_pn_ps(cdef: Cdef) -> str:
     lspp = ["limit", "skip", "pageNo", "pageSize"]
     reslut = []
     for i in lspp:
         reslut.append(f"""
-    public static func {i}(_ {i}: Int) -> Self {"{"}
-        return Self(_{i}: {i})
+    public static func {i}(_ {i}: Int) -> {to_list_query(cdef)} {"{"}
+        let instance = {to_list_query(cdef)}()
+        instance._{i} = {i}
+        return instance
     {"}"}
 
-    public mutating func {i}(_ {i}: Int) -> Self {"{"}
+    public func {i}(_ {i}: Int) -> {to_list_query(cdef)} {"{"}
         _{i} = {i}
         return self
     {"}"}""".strip('\n'))
     return join_lines(reslut)
 
 def _class_single_query(cdef: Cdef) -> str:
-    return codable_struct(to_single_query(cdef), [join_lines([
+    return codable_struct_class(to_single_query(cdef), [join_lines([
         join_lines(_single_query_items(cdef), 1),
-        _single_query_picks_omits(cdef),
-        _single_query_includes(cdef)
+        _single_query_picks_omits(cdef, True),
+        _single_query_includes(cdef, True)
     ], 2)])
 
 
@@ -254,15 +266,15 @@ def _list_query_find(cdef: Cdef) -> str:
     return join_lines([
         '    public static func `where`(',
         *map(arglist, enumerate(items)),
-        '    ) -> Self {',
-        '        return Self(',
-        *map(lambda i: f"            {i[1][0]}: {i[1][0]}{'' if i[0] == last else ','}", enumerate(items)),
-        '        )',
+        f'    ) -> {to_list_query(cdef)} {"{"}',
+        f'        let instance = {to_list_query(cdef)}()',
+        *map(lambda i: f"        instance.{i[1][0]} = {i[1][0]}", enumerate(items)),
+        '        return instance',
         '    }',
         '\n',
-        '    public mutating func `where`(',
+        '    public func `where`(',
         *map(arglist, enumerate(items)),
-        '    ) -> Self {',
+        f'    ) -> {to_list_query(cdef)} {"{"}',
         *map(lambda i: f"        if {i[0]} != nil {'{'} self.{i[0]} = {i[0]} {'}'}", items),
         '        return self',
         '    }'
@@ -288,14 +300,14 @@ def _class_list_query(cdef: Cdef) -> str:
         '\n',
         join_lines([
             _list_query_find(cdef),
-            _list_query_orders(sort_order),
-            _list_query_limit_skip_pn_ps(),
-            _single_query_picks_omits(cdef),
-            _single_query_includes(cdef)
+            _list_query_orders(sort_order, cdef, False),
+            _list_query_limit_skip_pn_ps(cdef),
+            _single_query_picks_omits(cdef, False),
+            _single_query_includes(cdef, False)
         ], 2)
     ]
     items.extend(operators)
-    return codable_struct(to_list_query(cdef), items)
+    return codable_struct_class(to_list_query(cdef), items)
 
 
 def _class_result(cdef: Cdef) -> str:
