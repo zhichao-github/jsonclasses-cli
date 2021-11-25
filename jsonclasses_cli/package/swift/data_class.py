@@ -256,7 +256,7 @@ def _list_query_find(cdef: Cdef) -> str:
         *map(arglist, enumerate(items)),
         '    ) -> Self {',
         '        return Self(',
-        *map(lambda i: f"        {i[1][0]}: {i[1][0]}{'' if i[0] == last else ','}", enumerate(items)),
+        *map(lambda i: f"            {i[1][0]}: {i[1][0]}{'' if i[0] == last else ','}", enumerate(items)),
         '        )',
         '    }',
         '\n',
