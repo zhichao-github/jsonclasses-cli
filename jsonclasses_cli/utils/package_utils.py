@@ -25,6 +25,10 @@ def to_update_request(cdef: Cdef) -> str:
     return cdef.name + 'UpdateRequest'
 
 
+def to_delete_request(cdef: Cdef) -> str:
+    return cdef.name + 'DeleteRequest'
+
+
 def to_id_request(cdef: Cdef) -> str:
     return cdef.name + 'IDRequest'
 

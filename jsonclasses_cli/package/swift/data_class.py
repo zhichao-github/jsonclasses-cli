@@ -11,7 +11,7 @@ from .shared_utils import (
     is_field_primary, is_field_local_key, field_can_read, field_can_create,
     field_can_update, field_has_default, field_ref_id_name, is_field_queryable,
     is_field_ref, is_field_required_for_create, is_field_required_for_read,
-    array
+    array, list_query_items
 )
 from ...utils.join_lines import join_lines
 from ...utils.package_utils import (
@@ -257,25 +257,8 @@ def _class_single_query(cdef: Cdef) -> str:
     ], 2)])
 
 
-def _list_query_items(cdef: Cdef) -> list[tuple[str, str]]:
-    items: list[tuple[str, str]] = []
-    for field in cdef.fields:
-        if not is_field_queryable(field):
-            continue
-        name = camelize(field.name, False)
-        type = jtype_to_swift_type(field.fdef, 'Q')
-        if is_field_ref(field):
-            if not is_field_local_key(field):
-                continue
-            idname = field_ref_id_name(field)
-            items.append((idname, 'IDQuery'))
-        else:
-            items.append((name, type))
-    return items
-
-
 def _list_query_find(cdef: Cdef) -> str:
-    items = _list_query_items(cdef)
+    items = list_query_items(cdef)
     last = len(items) - 1
     arglist = lambda i: f"        {i[1][0]}: {i[1][1]}? = nil{'' if i[0] == last else ','}"
     return join_lines([
@@ -297,7 +280,7 @@ def _list_query_find(cdef: Cdef) -> str:
 
 
 def _class_list_query(cdef: Cdef) -> str:
-    items = list(map(lambda i: codable_struct_item('public', 'var', i[0], i[1], True, 'nil'), _list_query_items(cdef)))
+    items = list(map(lambda i: codable_struct_item('public', 'var', i[0], i[1], True, 'nil'), list_query_items(cdef)))
     sort_order = to_sort_orders(cdef)
     sort_orders = array(sort_order)
     order = codable_struct_item(
