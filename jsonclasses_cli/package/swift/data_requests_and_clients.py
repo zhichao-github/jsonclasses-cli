@@ -37,40 +37,37 @@ def data_requests_and_clients(cdef: Cdef) -> str:
 
 def _data_find_request_nums(cdef: Cdef, method_name: str) -> str:
     return f"""
-    public mutating func {method_name}(_ {method_name}: Int) -> {to_list_request(cdef)} {'{'}
+    public func {method_name}(_ {method_name}: Int) -> {to_list_request(cdef)} {'{'}
         if query == nil {'{'} query = {to_list_query(cdef)}() {'}'}
         query = query!.{method_name}({method_name})
         return self
     {'}'}
 
-    public mutating func {method_name}(_ {method_name}: Int) async throws -> [{to_result(cdef)}] {'{'}
-        self = self.{method_name}({method_name})
-        return try await self.exec()
+    public func {method_name}(_ {method_name}: Int) async throws -> [{to_result(cdef)}] {'{'}
+        return try await self.{method_name}({method_name}).exec()
     {'}'}""".strip('\n')
 
 
 def _data_find_request_method(cdef: Cdef) -> str:
     return f"""
-    public mutating func order(_ order: {to_sort_orders(cdef)}) -> {to_list_request(cdef)} {'{'}
+    public func order(_ order: {to_sort_orders(cdef)}) -> {to_list_request(cdef)} {'{'}
         if query == nil {'{'} query = {to_list_query(cdef)}() {'}'}
         query = query!.order(order)
         return self
     {'}'}
 
-    public mutating func order(_ orders: [{to_sort_orders(cdef)}]) -> {to_list_request(cdef)} {'{'}
+    public func order(_ orders: [{to_sort_orders(cdef)}]) -> {to_list_request(cdef)} {'{'}
         if query == nil {'{'} query = {to_list_query(cdef)}() {'}'}
         query = query!.order(orders)
         return self
     {'}'}
 
-    public mutating func order(_ order: {to_sort_orders(cdef)}) async throws -> [{to_result(cdef)}] {'{'}
-        self = self.order(order)
-        return try await self.exec()
+    public func order(_ order: {to_sort_orders(cdef)}) async throws -> [{to_result(cdef)}] {'{'}
+        return try await self.order(order).exec()
     {'}'}
 
-    public mutating func order(_ orders: [{to_sort_orders(cdef)}]) async throws -> [{to_result(cdef)}] {'{'}
-        self = self.order(orders)
-        return try await self.exec()
+    public func order(_ orders: [{to_sort_orders(cdef)}]) async throws -> [{to_result(cdef)}] {'{'}
+        return try await self.order(orders).exec()
     {'}'}
 
 {join_lines(map(lambda n: _data_find_request_nums(cdef, n), ['skip', 'limit', 'pageSize', 'pageNo']), 2)}
@@ -79,38 +76,36 @@ def _data_find_request_method(cdef: Cdef) -> str:
 
 def _data_query_request_common(cdef: Cdef, single: bool = True) -> str:
     return join_lines([f"""
-    public mutating func pick(_ picks: [{to_result_picks(cdef)}]) -> Self {'{'}
+    public func pick(_ picks: [{to_result_picks(cdef)}]) -> Self {'{'}
         if query == nil {'{'} query = {to_single_query(cdef) if single else to_list_query(cdef)}() {'}'}
         query = query!.pick(picks)
         return self
     {'}'}
 
-    public mutating func pick(_ picks: [{to_result_picks(cdef)}]) async throws -> {to_result(cdef) if single else to_list_result(cdef)} {'{'}
-        self = self.pick(picks)
-        return try await self.exec()
+    public func pick(_ picks: [{to_result_picks(cdef)}]) async throws -> {to_result(cdef) if single else to_list_result(cdef)} {'{'}
+        return try await self.pick(picks).exec()
     {'}'}
 
-    public mutating func omit(_ omits: [{to_result_picks(cdef)}]) -> Self {'{'}
+    public func omit(_ omits: [{to_result_picks(cdef)}]) -> Self {'{'}
         if query == nil {'{'} query = {to_single_query(cdef) if single else to_list_query(cdef)}() {'}'}
         query = query!.omit(omits)
         return self
     {'}'}
 
-    public mutating func omit(_ omits: [{to_result_picks(cdef)}]) async throws -> {to_result(cdef) if single else to_list_result(cdef)} {'{'}
-        self = self.omit(omits)
-        return try await self.exec()
+    public func omit(_ omits: [{to_result_picks(cdef)}]) async throws -> {to_result(cdef) if single else to_list_result(cdef)} {'{'}
+        return try await self.omit(omits).exec()
     {'}'}""".strip('\n'), _data_query_request_includes(cdef, single)], 2)
 
 
 def _data_query_request_include(cdef: Cdef, item: tuple[str, str], single: bool = True) -> str:
     return f"""
-    public mutating func include(_ ref: {cdef.name}{camelize(item[0])}Include, _ query: {item[1]}? = nil) -> Self {'{'}
+    public func include(_ ref: {cdef.name}{camelize(item[0])}Include, _ query: {item[1]}? = nil) -> Self {'{'}
         if self.query == nil {'{'} self.query = {to_single_query(cdef) if single else to_list_query(cdef)}() {'}'}
         self.query = self.query!.include(ref, query)
         return self
     {'}'}
 
-    public mutating func include(_ ref: {cdef.name}{camelize(item[0])}Include, _ query: {item[1]}? = nil) async throws -> {to_result(cdef) if single else to_list_result(cdef)} {'{'}
+    public func include(_ ref: {cdef.name}{camelize(item[0])}Include, _ query: {item[1]}? = nil) async throws -> {to_result(cdef) if single else to_list_result(cdef)} {'{'}
         if self.query == nil {'{'} self.query = {to_single_query(cdef) if single else to_list_query(cdef)}() {'}'}
         self.query = self.query!.include(ref, query)
         return try await self.exec()
@@ -127,9 +122,14 @@ def _data_query_request_includes(cdef: Cdef, single: bool = True) -> str:
 
 def _data_create_request(cdef: Cdef, name: str) -> str:
     return join_lines([
-        f"public struct {to_create_request(cdef)} {'{'}",
+        f"public class {to_create_request(cdef)} {'{'}",
         f"    internal var input: {to_create_input(cdef)}",
         f"    internal var query: {to_single_query(cdef)}?",
+        '\n',
+        f"    internal init(input: {to_create_input(cdef)}, query: {to_single_query(cdef)}? = nil) {'{'}",
+        '        self.input = input',
+        '        self.query = query'
+        '    }',
         '\n',
         f"    internal func exec() async throws -> {to_result(cdef)} {'{'}",
         f"        return try await RequestManager.shared.post(",
@@ -144,10 +144,16 @@ def _data_create_request(cdef: Cdef, name: str) -> str:
 
 def _data_update_request(cdef: Cdef, name: str) -> str:
     return join_lines([
-        f"public struct {to_update_request(cdef)} {'{'}",
+        f"public class {to_update_request(cdef)} {'{'}",
         "    internal var id: String",
         f"    internal var input: {to_update_input(cdef)}",
         f"    internal var query: {to_single_query(cdef)}?",
+        '\n',
+        f"    internal init(id: String, input: {to_update_input(cdef)}, query: {to_single_query(cdef)}? = nil) {'{'}",
+        '        self.id = id',
+        '        self.input = input',
+        '        self.query = query'
+        '    }',
         '\n',
         f"    internal func exec() async throws -> {to_result(cdef)} {'{'}",
         f"        return try await RequestManager.shared.patch(",
@@ -162,8 +168,12 @@ def _data_update_request(cdef: Cdef, name: str) -> str:
 
 def _data_delete_request(cdef: Cdef, name: str) -> str:
     return join_lines([
-        f"public struct {to_delete_request(cdef)} {'{'}",
+        f"public class {to_delete_request(cdef)} {'{'}",
         "    internal var id: String",
+        "\n",
+        "    internal init(id: String) {",
+        '        self.id = id',
+        '    }',
         "\n",
         "    internal func exec() async throws {",
         "        return try await RequestManager.shared.delete(",
@@ -176,9 +186,14 @@ def _data_delete_request(cdef: Cdef, name: str) -> str:
 
 def _data_id_request(cdef: Cdef, name: str) -> str:
     return join_lines([
-        f"public struct {to_id_request(cdef)} {'{'}",
+        f"public class {to_id_request(cdef)} {'{'}",
         "    internal var id: String",
         f"    internal var query: {to_single_query(cdef)}?",
+        '\n',
+        f"    internal init(id: String, query: {to_single_query(cdef)}? = nil) {'{'}",
+        '        self.id = id',
+        '        self.query = query',
+        '    }',
         '\n',
         f"    internal func exec() async throws -> {to_result(cdef)} {'{'}",
         f"        return try await RequestManager.shared.get(",
@@ -193,8 +208,12 @@ def _data_id_request(cdef: Cdef, name: str) -> str:
 
 def _data_find_request(cdef: Cdef, name: str) -> str:
     return join_lines([
-        f"public struct {to_list_request(cdef)} {'{'}",
+        f"public class {to_list_request(cdef)} {'{'}",
         f"    internal var query: {to_list_query(cdef)}?",
+        '\n',
+        f"    internal init(query: {to_list_query(cdef)}? = nil) {'{'}",
+        '        self.query = query',
+        '    }',
         '\n',
         f"    internal func exec() async throws -> [{to_result(cdef)}] {'{'}",
         f"        return try await RequestManager.shared.get(",
