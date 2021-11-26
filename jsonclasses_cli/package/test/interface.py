@@ -1,3 +1,4 @@
+from jsonclasses_cli.utils.package_utils import to_sort_orders
 from ...utils.join_lines import join_lines
 
 
@@ -8,7 +9,7 @@ def interface(name: str, items: list[InterfaceItem]) -> str:
     return join_lines([
         join_lines([
             interface_first_line(name),
-            _interface_inst_items(items),
+            interface_inst_items(items),
             '}'
         ], 1)
     ], 2)
@@ -34,10 +35,22 @@ def interface_pick_omit_items(name: str) -> str:
 
 
 def interface_include_item(name: str) -> str:
-    return f"    _include?: {name}[]"
+    return f"    _includes?: {name}[]"
 
 
-def _interface_inst_items(items: list[InterfaceItem]) -> str:
+def list_query_order_item(name: str) -> str:
+    return f"    _order?: {name}[]"
+
+
+def list_query_limit_skip_pn_ps() -> str:
+    lspp = ["limit", "skip", "pageNo", "pageSize"]
+    reslut = []
+    for i in lspp:
+        reslut.append(f"    _{i}?: number")
+    return join_lines(reslut)
+
+
+def interface_inst_items(items: list[InterfaceItem]) -> str:
     return join_lines(map(lambda i: f"    {i[0]}{'?' if i[2] else ''}: {i[1]}", items), 1)
 
 

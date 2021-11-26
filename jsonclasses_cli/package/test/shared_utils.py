@@ -17,6 +17,8 @@ def list_query_items(cdef: Cdef) -> list[tuple[str, str]]:
         name = camelize(field.name, False)
         type = jtype_to_ts_type(field.fdef, 'Q')
         if is_field_ref(field):
+            continue
+        else:
             items.append((name, type))
     return items
 
