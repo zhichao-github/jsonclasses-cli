@@ -1,4 +1,3 @@
-from typing import Literal
 from ...utils.join_lines import join_lines
 
 
@@ -25,6 +24,17 @@ def interface_type_item(name: str, items: list[str]) -> str:
 
 def interface_include_key_item(name: str, include_type: str) -> str:
     return f"    {name}?: {include_type}"
+
+
+def interface_pick_omit_items(name: str) -> str:
+    return join_lines([
+        f"    _pick?: {name}[]",
+        f"    _omit?: {name}[]",
+    ])
+
+
+def interface_include_item(name: str) -> str:
+    return f"    _include?: {name}[]"
 
 
 def _interface_inst_items(items: list[InterfaceItem]) -> str:
