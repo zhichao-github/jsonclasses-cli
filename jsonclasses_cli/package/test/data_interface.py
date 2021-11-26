@@ -4,7 +4,6 @@ from jsonclasses.cdef import Cdef
 from .interface import (
     interface, interface_first_line, interface_include_item, interface_include_key_item, interface_inst_items,
     interface_item, interface_pick_omit_items, interface_type_item, list_query_limit_skip_pn_ps, list_query_order_item)
-from .jtype_to_ts_type import jtype_to_ts_type
 from .shared_utils import (
     class_required_include, field_ref_id_name, is_field_local_key, is_field_primary,
     is_field_ref, is_field_required_for_read, field_can_read, field_can_create, is_field_required_for_create,
@@ -14,6 +13,7 @@ from ...utils.package_utils import (
     to_create_input, to_include, to_list_query, to_result, to_result_picks, to_single_query,
     to_sort_orders, to_update_input)
 from ...utils.join_lines import join_lines
+from .jtype_to_ts_type import jtype_to_ts_type
 
 
 def data_interface(cdef: Cdef) -> str:
