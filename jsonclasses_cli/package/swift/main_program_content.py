@@ -1,4 +1,5 @@
 from jsonclasses.cgraph import CGraph
+from .session_input import session_input
 from .import_lines import import_lines
 from .string_query import string_query
 from .int_query import int_query
@@ -36,6 +37,7 @@ def main_program_content(cgraph: CGraph) -> str:
         sort_order(),
         *map(lambda e: data_enum(e), cgraph._enum_map.values()),
         *map(lambda c: data_class(c), cgraph._map.values()),
+        *map(lambda c: session_input(c), cgraph._map.values()),
         session(session_classes) if use_session else '',
         response_struct(),
         user_default(),
