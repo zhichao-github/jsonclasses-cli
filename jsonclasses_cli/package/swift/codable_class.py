@@ -33,7 +33,7 @@ def _codable_class_first_line(name: str) -> str:
 
 
 def _codable_class_inst_vars(items: list[CodableClassItem], unwrapped: bool) -> str:
-    return join_lines(map(lambda i: f"    {i[0]} {i[1]} {i[2]}: {i[3]}{'?' if i[4] else '!' if unwrapped else ''}", items), 1)
+    return join_lines(map(lambda i: f"    {i[0]} {i[1]} {i[2]}: {i[3]}{'!' if unwrapped else '?' if i[4] else ''}", items), 1)
 
 
 def _codable_class_init_param_list(items: list[CodableClassItem]) -> str:
