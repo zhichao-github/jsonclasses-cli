@@ -1,10 +1,24 @@
 from inflection import camelize
+from jsonclasses.cdef import Cdef
 from jsonclasses.jfield import JField
 from jsonclasses.fdef import (
     FStore, FType, Nullability, ReadRule, Queryability, WriteRule
 )
 from jsonclasses.modifiers.required_modifier import RequiredModifier
 from jsonclasses.modifiers.default_modifier import DefaultModifier
+from .jtype_to_ts_type import jtype_to_ts_type
+
+
+def list_query_items(cdef: Cdef) -> list[tuple[str, str]]:
+    items: list[tuple[str, str]] = []
+    for field in cdef.fields:
+        if not is_field_queryable(field):
+            continue
+        name = camelize(field.name, False)
+        type = jtype_to_ts_type(field.fdef, 'Q')
+        if is_field_ref(field):
+            items.append((name, type))
+    return items
 
 
 def is_field_local_key(field: JField) -> bool:
@@ -90,6 +104,11 @@ def field_can_read(field: JField) -> bool:
     if field.fdef.fstore == FStore.TEMP:
         return False
     return True
+
+
+def class_required_include(cdef: Cdef) -> bool:
+    items = [f for f in cdef.fields if is_field_ref(f)]
+    return len(items) > 0
 
 
 def is_list_field(field: JField) -> bool:

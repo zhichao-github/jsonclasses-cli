@@ -1,13 +1,17 @@
 from inflection import camelize
 from jsonclasses.cdef import Cdef
-from .interface import interface, interface_first_line, interface_include_key_item, interface_item, interface_type_item
+from .interface import (
+    interface, interface_first_line, interface_include_item, interface_include_key_item,
+    interface_item, interface_pick_omit_items, interface_type_item)
 from .jtype_to_ts_type import jtype_to_ts_type
 from .shared_utils import (
-    field_ref_id_name, is_field_local_key, is_field_primary, is_field_ref, is_field_required_for_read,
-    field_can_read, field_can_create, is_field_required_for_create,
-    field_can_update, is_list_field, is_field_required_null_for_update, string,
+    class_required_include, field_ref_id_name, is_field_local_key, is_field_primary,
+    is_field_ref, is_field_required_for_read, field_can_read, field_can_create, is_field_required_for_create,
+    field_can_update, is_list_field, is_field_required_null_for_update, list_query_items, string,
     is_field_queryable, to_include_name)
-from ...utils.package_utils import to_create_input, to_include, to_list_query, to_result, to_result_picks, to_sort_orders, to_update_input
+from ...utils.package_utils import (
+    to_create_input, to_include, to_result, to_result_picks, to_single_query,
+    to_sort_orders, to_update_input)
 from ...utils.join_lines import join_lines
 
 
@@ -20,6 +24,7 @@ def data_interface(cdef: Cdef) -> str:
         _interface_result_pick(cdef),
         _interface_include_keys(cdef),
         _interface_include_type(cdef),
+        _interface_single_query(cdef),
     ], 2)
 
 
@@ -140,15 +145,31 @@ def _interface_include_key(name: str, key: str) -> str:
 
 def _interface_include_type(cdef: Cdef) -> str:
     cname = cdef.name
+    include = to_include(cdef)
     include_types: list[str] = []
     for field in cdef.fields:
         if is_field_ref(field):
             name = to_include_name(cname, field.name)
             include_types.append(name)
-    return interface_type_item(to_include(cdef), include_types)
+    return interface_type_item(include, include_types) if len(include_types) else ""
 
-# def _interface_single_query(cdef: Cdef) -> str:
-#     items: list[str] = []
-#     for field in cdef.fields:
 
-#     name = to_single_query(cdef)
+def _interface_single_query(cdef: Cdef) -> str:
+    name = to_single_query(cdef)
+    result_pick_name = to_result_picks(cdef)
+    return join_lines([
+        interface_first_line(name),
+        interface_pick_omit_items(result_pick_name),
+        _single_query_include(cdef),
+        '}'
+    ])
+
+
+def _single_query_include(cdef: Cdef) -> str:
+    name = to_include(cdef)
+    return interface_include_item(name) if class_required_include(cdef) else ""
+
+
+def _interface_list_query(cdef: Cdef) -> str:
+    items = list(map(lambda i: interface_item(i[0], i[1], True), list_query_items(cdef)))
+    return ""
