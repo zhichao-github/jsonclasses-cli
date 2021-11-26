@@ -1,8 +1,9 @@
 from inflection import camelize
+from jsonclasses.fdef import FType
 from jsonclasses.cdef import Cdef
 from .interface import (
-    interface, interface_first_line, interface_include_item, interface_include_key_item,
-    interface_item, interface_pick_omit_items, interface_type_item)
+    interface, interface_first_line, interface_include_item, interface_include_key_item, interface_inst_items,
+    interface_item, interface_pick_omit_items, interface_type_item, list_query_limit_skip_pn_ps, list_query_order_item)
 from .jtype_to_ts_type import jtype_to_ts_type
 from .shared_utils import (
     class_required_include, field_ref_id_name, is_field_local_key, is_field_primary,
@@ -10,7 +11,7 @@ from .shared_utils import (
     field_can_update, is_list_field, is_field_required_null_for_update, list_query_items, string,
     is_field_queryable, to_include_name)
 from ...utils.package_utils import (
-    to_create_input, to_include, to_result, to_result_picks, to_single_query,
+    to_create_input, to_include, to_list_query, to_result, to_result_picks, to_single_query,
     to_sort_orders, to_update_input)
 from ...utils.join_lines import join_lines
 
@@ -25,6 +26,7 @@ def data_interface(cdef: Cdef) -> str:
         _interface_include_keys(cdef),
         _interface_include_type(cdef),
         _interface_single_query(cdef),
+        _interface_list_query(cdef),
     ], 2)
 
 
@@ -129,16 +131,21 @@ def _interface_include_keys(cdef: Cdef) -> str:
     keys: list[str] = []
     for field in cdef.fields:
         if is_field_ref(field):
+            if field.fdef.ftype == FType.LIST:
+                ftype = jtype_to_ts_type(field.fdef, 'R').removesuffix('[]')
+                include_type = camelize(ftype + 'ListQuery')
+            else:
+                ftype = jtype_to_ts_type(field.fdef, 'R')
+                include_type = camelize(ftype + 'SingleQuery')
             name = to_include_name(cname, field.name)
-            keys.append(_interface_include_key(name, field.name))
+            keys.append(_interface_include_key(name, field.name, include_type))
     return join_lines(keys, 2)
 
 
-def _interface_include_key(name: str, key: str) -> str:
-    include_type = camelize(key + 'ListQuery')
+def _interface_include_key(name: str, key: str, ftype: str) -> str:
     return join_lines([
         interface_first_line(name),
-        interface_include_key_item(key, include_type),
+        interface_include_key_item(key, ftype),
         '}'
     ])
 
@@ -171,5 +178,16 @@ def _single_query_include(cdef: Cdef) -> str:
 
 
 def _interface_list_query(cdef: Cdef) -> str:
+    name = to_list_query(cdef)
     items = list(map(lambda i: interface_item(i[0], i[1], True), list_query_items(cdef)))
-    return ""
+    order = to_sort_orders(cdef)
+    pick = to_result_picks(cdef)
+    return join_lines([
+        interface_first_line(name),
+        interface_inst_items(items),
+        list_query_order_item(order),
+        list_query_limit_skip_pn_ps(),
+        interface_pick_omit_items(pick),
+        _single_query_include(cdef),
+        '}'
+    ])
