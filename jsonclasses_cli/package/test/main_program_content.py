@@ -11,6 +11,7 @@ from .boolean_query import boolean_query
 from .date_query import date_query
 from .data_enum import data_enum
 from ...utils.join_lines import join_lines
+from ...utils.package_utils import session_input_items
 
 
 def main_program_content(cgraph: CGraph) -> str:
@@ -24,7 +25,7 @@ def main_program_content(cgraph: CGraph) -> str:
         boolean_query(),
         date_query(),
         *map(lambda c: data_interface(c), cgraph._map.values()),
-        *map(lambda c: session_input(c), cgraph._map.values()),
+        *map(lambda c: session_input(c), session_input_items(cgraph)),
         session(session_classes)
     ], 3)
 
