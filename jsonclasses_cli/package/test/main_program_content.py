@@ -1,7 +1,7 @@
 from jsonclasses.cgraph import CGraph
-
-from jsonclasses_cli.package.test.session_input import session_input
-
+from .request_manager import request_manager
+from .session_manager import session_manager
+from .session_input import session_input
 from .session import session
 from .session_items import session_items
 from .data_interface import data_interface
@@ -26,7 +26,9 @@ def main_program_content(cgraph: CGraph) -> str:
         date_query(),
         *map(lambda c: data_interface(c), cgraph._map.values()),
         *map(lambda c: session_input(c), session_input_items(cgraph)),
-        session(session_classes)
+        session(session_classes),
+        session_manager(session_classes) if use_session else '',
+        request_manager('http://127.0.0.1:5000'),
     ], 3)
 
 
