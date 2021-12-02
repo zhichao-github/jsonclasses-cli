@@ -1,5 +1,5 @@
 from inflection import camelize
-from jsonclasses.cdef import Cdef
+from jsonclasses.cdef import CDef
 from jsonclasses.jfield import JField
 from jsonclasses.fdef import (
     FStore, FType, Nullability, ReadRule, Queryability, WriteRule
@@ -11,7 +11,7 @@ from .jtype_to_swift_type import jtype_to_swift_type
 from ...utils.package_utils import to_list_query, to_single_query
 
 
-def class_include_items(cdef: Cdef) -> list[tuple[str, str]]:
+def class_include_items(cdef: CDef) -> list[tuple[str, str]]:
     items: list[tuple[str, str]] = []
     for field in cdef.fields:
         if is_field_ref(field):
@@ -22,7 +22,7 @@ def class_include_items(cdef: Cdef) -> list[tuple[str, str]]:
     return items
 
 
-def list_query_items(cdef: Cdef) -> list[tuple[str, str]]:
+def list_query_items(cdef: CDef) -> list[tuple[str, str]]:
     items: list[tuple[str, str]] = []
     for field in cdef.fields:
         if not is_field_queryable(field):
@@ -43,7 +43,7 @@ def is_field_local_key(field: JField) -> bool:
     return field.fdef.fstore == FStore.LOCAL_KEY
 
 
-def class_update_input_items(cdef: Cdef) -> list[CodableClassItem]:
+def class_update_input_items(cdef: CDef) -> list[CodableClassItem]:
     items: list[CodableClassItem] = []
     for field in cdef.fields:
         if not field_can_update(field):
@@ -60,7 +60,7 @@ def class_update_input_items(cdef: Cdef) -> list[CodableClassItem]:
     return items
 
 
-def class_create_input_items(cdef: Cdef) -> list[CodableClassItem]:
+def class_create_input_items(cdef: CDef) -> list[CodableClassItem]:
     items: list[CodableClassItem] = []
     for field in cdef.fields:
         if not field_can_create(field):

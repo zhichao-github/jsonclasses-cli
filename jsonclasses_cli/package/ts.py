@@ -1,9 +1,9 @@
 from pathlib import Path
 from typing import Literal, cast
 from inflection import camelize, underscore, dasherize
-from jsonclasses.cdef import Cdef
+from jsonclasses.cdef import CDef
 from jsonclasses.cgraph import CGraph
-from jsonclasses.fdef import FStore, Fdef, FType, Nullability, Queryability, ReadRule, WriteRule
+from jsonclasses.fdef import FStore, FDef, FType, Nullability, Queryability, ReadRule, WriteRule
 from jsonclasses.jfield import JField
 from jsonclasses.modifiers.required_modifier import RequiredModifier
 from jsonclasses.modifiers.default_modifier import DefaultModifier
@@ -72,7 +72,7 @@ def _gen_queries(query_names: list[str]) -> str:
     return retval
 
 
-def _gen_interfaces(cgraph: CGraph, cmap: dict[str, Cdef]) -> str:
+def _gen_interfaces(cgraph: CGraph, cmap: dict[str, CDef]) -> str:
     required_enums: list[str] = []
     required_queries: list[str] = []
     session_names: list[str] = []
@@ -195,7 +195,7 @@ def _gen_enum_interfaces(cgraph: CGraph, enum_names: list[str]) -> str:
     return "\n".join(interfaces)
 
 
-def _ts_type(fdef: Fdef, mode: Literal['C', 'U', 'R', 'Q']) -> str:
+def _ts_type(fdef: FDef, mode: Literal['C', 'U', 'R', 'Q']) -> str:
     match fdef.ftype:
         case FType.STR:
             if mode == 'Q':
@@ -474,7 +474,7 @@ export default api\n
     """
 
 
-def _gen_model_client(cdef: Cdef) -> str:
+def _gen_model_client(cdef: CDef) -> str:
     if not hasattr(cdef.cls, 'aconf'):
         return ''
     aconf = cast(type[APIObject], cdef.cls).aconf

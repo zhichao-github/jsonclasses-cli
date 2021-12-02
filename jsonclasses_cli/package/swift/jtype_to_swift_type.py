@@ -1,8 +1,8 @@
 from typing import Literal
-from jsonclasses.fdef import Fdef, FType
+from jsonclasses.fdef import FDef, FType
 
 
-def jtype_to_swift_type(fdef: Fdef, mode: Literal['C', 'U', 'R', 'Q']) -> str:
+def jtype_to_swift_type(fdef: FDef, mode: Literal['C', 'U', 'R', 'Q']) -> str:
     match fdef.ftype:
         case FType.STR:
             if mode == 'Q':

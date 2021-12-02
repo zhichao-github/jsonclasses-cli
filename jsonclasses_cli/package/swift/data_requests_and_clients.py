@@ -1,6 +1,6 @@
 from typing import cast
 from inflection import camelize, underscore
-from jsonclasses.cdef import Cdef
+from jsonclasses.cdef import CDef
 from jsonclasses_server.aconf import AConf
 from .codable_class import CodableClassItem
 from .shared_utils import class_create_input_items, class_include_items, class_update_input_items, list_query_items
@@ -12,7 +12,7 @@ from ...utils.package_utils import (
 )
 
 
-def data_client_instances(cdef: Cdef) -> str:
+def data_client_instances(cdef: CDef) -> str:
     if not class_needs_api(cdef):
         return ''
     aconf = cast(AConf, cdef.cls.aconf)
@@ -21,7 +21,7 @@ def data_client_instances(cdef: Cdef) -> str:
     return f'public var {var_name} = {client_name}()'
 
 
-def data_requests_and_clients(cdef: Cdef) -> str:
+def data_requests_and_clients(cdef: CDef) -> str:
     if not class_needs_api(cdef):
         return ''
     aconf = cast(AConf, cdef.cls.aconf)
@@ -35,7 +35,7 @@ def data_requests_and_clients(cdef: Cdef) -> str:
     ], 2)
 
 
-def _data_find_request_nums(cdef: Cdef, method_name: str) -> str:
+def _data_find_request_nums(cdef: CDef, method_name: str) -> str:
     return f"""
     public func {method_name}(_ {method_name}: Int) -> {to_list_request(cdef)} {'{'}
         if query == nil {'{'} query = {to_list_query(cdef)}() {'}'}
@@ -48,7 +48,7 @@ def _data_find_request_nums(cdef: Cdef, method_name: str) -> str:
     {'}'}""".strip('\n')
 
 
-def _data_find_request_method(cdef: Cdef) -> str:
+def _data_find_request_method(cdef: CDef) -> str:
     return f"""
     public func order(_ order: {to_sort_orders(cdef)}) -> {to_list_request(cdef)} {'{'}
         if query == nil {'{'} query = {to_list_query(cdef)}() {'}'}
@@ -74,7 +74,7 @@ def _data_find_request_method(cdef: Cdef) -> str:
     """.strip('\n')
 
 
-def _data_query_request_common(cdef: Cdef, single: bool = True) -> str:
+def _data_query_request_common(cdef: CDef, single: bool = True) -> str:
     return join_lines([f"""
     public func pick(_ picks: [{to_result_picks(cdef)}]) -> Self {'{'}
         if query == nil {'{'} query = {to_single_query(cdef) if single else to_list_query(cdef)}() {'}'}
@@ -97,7 +97,7 @@ def _data_query_request_common(cdef: Cdef, single: bool = True) -> str:
     {'}'}""".strip('\n'), _data_query_request_includes(cdef, single)], 2)
 
 
-def _data_query_request_include(cdef: Cdef, item: tuple[str, str], single: bool = True) -> str:
+def _data_query_request_include(cdef: CDef, item: tuple[str, str], single: bool = True) -> str:
     return f"""
     public func include(_ ref: {cdef.name}{camelize(item[0])}Include, _ query: {item[1]}? = nil) -> Self {'{'}
         if self.query == nil {'{'} self.query = {to_single_query(cdef) if single else to_list_query(cdef)}() {'}'}
@@ -113,14 +113,14 @@ def _data_query_request_include(cdef: Cdef, item: tuple[str, str], single: bool 
     """.strip('\n')
 
 
-def _data_query_request_includes(cdef: Cdef, single: bool = True) -> str:
+def _data_query_request_includes(cdef: CDef, single: bool = True) -> str:
     items = class_include_items(cdef)
     if len(items) == 0:
         return ''
     return join_lines(map(lambda i: _data_query_request_include(cdef, i, single), items), 2)
 
 
-def _data_create_request(cdef: Cdef, name: str) -> str:
+def _data_create_request(cdef: CDef, name: str) -> str:
     return join_lines([
         f"public class {to_create_request(cdef)} {'{'}",
         f"    internal var input: {to_create_input(cdef)}",
@@ -142,7 +142,7 @@ def _data_create_request(cdef: Cdef, name: str) -> str:
     ], 1)
 
 
-def _data_update_request(cdef: Cdef, name: str) -> str:
+def _data_update_request(cdef: CDef, name: str) -> str:
     return join_lines([
         f"public class {to_update_request(cdef)} {'{'}",
         "    internal var id: String",
@@ -166,7 +166,7 @@ def _data_update_request(cdef: Cdef, name: str) -> str:
     ], 1)
 
 
-def _data_delete_request(cdef: Cdef, name: str) -> str:
+def _data_delete_request(cdef: CDef, name: str) -> str:
     return join_lines([
         f"public class {to_delete_request(cdef)} {'{'}",
         "    internal var id: String",
@@ -184,7 +184,7 @@ def _data_delete_request(cdef: Cdef, name: str) -> str:
     ], 1)
 
 
-def _data_id_request(cdef: Cdef, name: str) -> str:
+def _data_id_request(cdef: CDef, name: str) -> str:
     return join_lines([
         f"public class {to_id_request(cdef)} {'{'}",
         "    internal var id: String",
@@ -206,7 +206,7 @@ def _data_id_request(cdef: Cdef, name: str) -> str:
     ], 1)
 
 
-def _data_find_request(cdef: Cdef, name: str) -> str:
+def _data_find_request(cdef: CDef, name: str) -> str:
     return join_lines([
         f"public class {to_list_request(cdef)} {'{'}",
         f"    internal var query: {to_list_query(cdef)}?",
@@ -227,7 +227,7 @@ def _data_find_request(cdef: Cdef, name: str) -> str:
     ], 1)
 
 
-def _data_client(cdef: Cdef, aconf: AConf) -> str:
+def _data_client(cdef: CDef, aconf: AConf) -> str:
     return join_lines([
         f'public struct {cdef.name}Client {"{"}',
         '\n',
@@ -244,7 +244,7 @@ def _data_client(cdef: Cdef, aconf: AConf) -> str:
     ], 1)
 
 
-def _data_client_create_2(cdef: Cdef, items: list[CodableClassItem]) -> str:
+def _data_client_create_2(cdef: CDef, items: list[CodableClassItem]) -> str:
     if len(items) == 0:
         return join_lines([
             f'    public func create() -> {to_create_request(cdef)} {"{"}',
@@ -265,7 +265,7 @@ def _data_client_create_2(cdef: Cdef, items: list[CodableClassItem]) -> str:
     ], 1)
 
 
-def _data_client_create_4(cdef: Cdef, items: list[CodableClassItem]) -> str:
+def _data_client_create_4(cdef: CDef, items: list[CodableClassItem]) -> str:
     if len(items) == 0:
         return join_lines([
             f'    public func create() async throws -> {to_result(cdef)} {"{"}',
@@ -286,7 +286,7 @@ def _data_client_create_4(cdef: Cdef, items: list[CodableClassItem]) -> str:
     ], 1)
 
 
-def _data_client_creates(cdef: Cdef, aconf: AConf) -> str:
+def _data_client_creates(cdef: CDef, aconf: AConf) -> str:
     if 'C' not in aconf.actions:
         return ''
     input_items = class_create_input_items(cdef)
@@ -306,7 +306,7 @@ def _data_client_creates(cdef: Cdef, aconf: AConf) -> str:
     ], 1)
 
 
-def _data_client_update_2(cdef: Cdef, items: list[CodableClassItem]) -> str:
+def _data_client_update_2(cdef: CDef, items: list[CodableClassItem]) -> str:
     if len(items) == 0:
         return join_lines([
             f'    public func update(_ id: String) -> {to_update_request(cdef)} {"{"}',
@@ -328,7 +328,7 @@ def _data_client_update_2(cdef: Cdef, items: list[CodableClassItem]) -> str:
     ], 1)
 
 
-def _data_client_update_4(cdef: Cdef, items: list[CodableClassItem]) -> str:
+def _data_client_update_4(cdef: CDef, items: list[CodableClassItem]) -> str:
     if len(items) == 0:
         return join_lines([
             f'    public func update(_ id: String) async throws -> {to_result(cdef)} {"{"}',
@@ -351,7 +351,7 @@ def _data_client_update_4(cdef: Cdef, items: list[CodableClassItem]) -> str:
     ], 1)
 
 
-def _data_client_updates(cdef: Cdef, aconf: AConf) -> str:
+def _data_client_updates(cdef: CDef, aconf: AConf) -> str:
     if 'U' not in aconf.actions:
         return ''
     input_items = class_update_input_items(cdef)
@@ -371,7 +371,7 @@ def _data_client_updates(cdef: Cdef, aconf: AConf) -> str:
     ], 1)
 
 
-def _data_client_delete(cdef: Cdef, aconf: AConf) -> str:
+def _data_client_delete(cdef: CDef, aconf: AConf) -> str:
     if 'D' not in aconf.actions:
         return ''
     return join_lines([
@@ -382,7 +382,7 @@ def _data_client_delete(cdef: Cdef, aconf: AConf) -> str:
     ], 1)
 
 
-def _data_client_ids(cdef: Cdef, aconf: AConf) -> str:
+def _data_client_ids(cdef: CDef, aconf: AConf) -> str:
     if 'R' not in aconf.actions:
         return ''
     return f"""
@@ -397,7 +397,7 @@ def _data_client_ids(cdef: Cdef, aconf: AConf) -> str:
     """.strip('\n')
 
 
-def _data_client_find_2(cdef: Cdef, items: list[tuple[str, str]]) -> str:
+def _data_client_find_2(cdef: CDef, items: list[tuple[str, str]]) -> str:
     last = len(items) - 1
     return join_lines([
         '    public func find(',
@@ -410,7 +410,7 @@ def _data_client_find_2(cdef: Cdef, items: list[tuple[str, str]]) -> str:
     ], 1)
 
 
-def _data_client_find_4(cdef: Cdef, items: list[tuple[str, str]]) -> str:
+def _data_client_find_4(cdef: CDef, items: list[tuple[str, str]]) -> str:
     last = len(items) - 1
     return join_lines([
         '    public func find(',
@@ -424,7 +424,7 @@ def _data_client_find_4(cdef: Cdef, items: list[tuple[str, str]]) -> str:
     ], 1)
 
 
-def _data_client_finds(cdef: Cdef, aconf: AConf) -> str:
+def _data_client_finds(cdef: CDef, aconf: AConf) -> str:
     if 'L' not in aconf.actions:
         return ''
     query_items = list_query_items(cdef)

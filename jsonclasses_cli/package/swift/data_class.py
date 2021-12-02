@@ -1,5 +1,5 @@
 from inflection import camelize
-from jsonclasses.cdef import Cdef
+from jsonclasses.cdef import CDef
 from jsonclasses.fdef import FType
 from .unary_sort_order import unary_sort_order
 from .codable_struct import codable_struct, codable_struct_class, codable_struct_item
@@ -20,7 +20,7 @@ from ...utils.package_utils import (
 )
 
 
-def data_class(cdef: Cdef) -> str:
+def data_class(cdef: CDef) -> str:
     return join_lines([
         _class_create_input(cdef),
         _class_update_input(cdef),
@@ -34,15 +34,15 @@ def data_class(cdef: Cdef) -> str:
     ], 2)
 
 
-def _class_create_input(cdef: Cdef) -> str:
+def _class_create_input(cdef: CDef) -> str:
     return codable_class(to_create_input(cdef), class_create_input_items(cdef))
 
 
-def _class_update_input(cdef: Cdef) -> str:
+def _class_update_input(cdef: CDef) -> str:
     return codable_class(to_update_input(cdef), class_update_input_items(cdef))
 
 
-def _class_sort_orders(cdef: Cdef) -> str:
+def _class_sort_orders(cdef: CDef) -> str:
     fnames: list[str] = []
     for field in cdef.fields:
         if not is_field_queryable(field):
@@ -65,7 +65,7 @@ def _class_sort_orders(cdef: Cdef) -> str:
     return join_lines([enum, unary], 2)
 
 
-def _class_result_picks(cdef: Cdef) -> str:
+def _class_result_picks(cdef: CDef) -> str:
     items: list[str] = []
     for field in cdef.fields:
         if not field_can_read(field):
@@ -78,7 +78,7 @@ def _class_result_picks(cdef: Cdef) -> str:
     return codable_enum(to_result_picks(cdef), 'String', items)
 
 
-def _class_include_key_enums(cdef: Cdef) -> str:
+def _class_include_key_enums(cdef: CDef) -> str:
     cname = cdef.name
     enums: list[str] = []
     for field in cdef.fields:
@@ -105,7 +105,7 @@ def _class_include_enum_encode_case(key: str) -> str:
             try! container.encode(value, forKey: .{key})""".strip('\n')
 
 
-def _class_include_enum(cdef: Cdef) -> str:
+def _class_include_enum(cdef: CDef) -> str:
     items = class_include_items(cdef)
     if len(items) == 0:
         return ""
@@ -140,7 +140,7 @@ def _class_include_enum(cdef: Cdef) -> str:
     ], 2)])
 
 
-def _single_query_items(cdef: Cdef) -> list[str]:
+def _single_query_items(cdef: CDef) -> list[str]:
     result_picks = array(to_result_picks(cdef))
     result_includes = array(to_include(cdef))
     pick = codable_struct_item(
@@ -155,7 +155,7 @@ def _single_query_items(cdef: Cdef) -> list[str]:
     return [pick, omit, includes]
 
 
-def _single_query_picks_omits(cdef: Cdef, single: bool = True) -> str:
+def _single_query_picks_omits(cdef: CDef, single: bool = True) -> str:
     rpname = to_result_picks(cdef)
     return f"""
     public static func pick(_ picks: [{rpname}]) -> {to_single_query(cdef) if single else to_list_query(cdef)} {'{'}
@@ -181,7 +181,7 @@ def _single_query_picks_omits(cdef: Cdef, single: bool = True) -> str:
     {'}'}""".strip('\n')
 
 
-def _single_query_include(cdef: Cdef, key: str, itype: str, qtype: str, single: bool = True) -> str:
+def _single_query_include(cdef: CDef, key: str, itype: str, qtype: str, single: bool = True) -> str:
     return f"""
     public static func include(_ ref: {itype}, _ query: {qtype}? = nil) -> {to_single_query(cdef) if single else to_list_query(cdef)} {'{'}
         let instance = {to_single_query(cdef) if single else to_list_query(cdef)}()
@@ -196,7 +196,7 @@ def _single_query_include(cdef: Cdef, key: str, itype: str, qtype: str, single: 
     {'}'}""".strip('\n')
 
 
-def _single_query_includes(cdef: Cdef, single: bool = True) -> str:
+def _single_query_includes(cdef: CDef, single: bool = True) -> str:
     items: list[tuple(str, str, str)] = []
     for field in cdef.fields:
         if is_field_ref(field):
@@ -207,7 +207,7 @@ def _single_query_includes(cdef: Cdef, single: bool = True) -> str:
     return join_lines(map(lambda i: _single_query_include(cdef, i[0], i[1], i[2], single), items), 2)
 
 
-def _list_query_orders(order: str, cdef: Cdef, single: bool = True) -> str:
+def _list_query_orders(order: str, cdef: CDef, single: bool = True) -> str:
     return f"""
     public static func order(_ order: {order}) -> {to_single_query(cdef) if single else to_list_query(cdef)} {"{"}
         let instance = {to_single_query(cdef) if single else to_list_query(cdef)}()
@@ -234,7 +234,7 @@ def _list_query_orders(order: str, cdef: Cdef, single: bool = True) -> str:
     {"}"}"""
 
 
-def _list_query_limit_skip_pn_ps(cdef: Cdef) -> str:
+def _list_query_limit_skip_pn_ps(cdef: CDef) -> str:
     lspp = ["limit", "skip", "pageNo", "pageSize"]
     reslut = []
     for i in lspp:
@@ -251,7 +251,7 @@ def _list_query_limit_skip_pn_ps(cdef: Cdef) -> str:
     {"}"}""".strip('\n'))
     return join_lines(reslut)
 
-def _class_single_query(cdef: Cdef) -> str:
+def _class_single_query(cdef: CDef) -> str:
     return codable_struct_class(to_single_query(cdef), [join_lines([
         join_lines(_single_query_items(cdef), 1),
         _single_query_picks_omits(cdef, True),
@@ -259,7 +259,7 @@ def _class_single_query(cdef: Cdef) -> str:
     ], 2)])
 
 
-def _list_query_find(cdef: Cdef) -> str:
+def _list_query_find(cdef: CDef) -> str:
     items = list_query_items(cdef)
     last = len(items) - 1
     arglist = lambda i: f"        {i[1][0]}: {i[1][1]}? = nil{'' if i[0] == last else ','}"
@@ -281,7 +281,7 @@ def _list_query_find(cdef: Cdef) -> str:
     ], 1)
 
 
-def _class_list_query(cdef: Cdef) -> str:
+def _class_list_query(cdef: CDef) -> str:
     items = list(map(lambda i: codable_struct_item('public', 'var', i[0], i[1], True, 'nil'), list_query_items(cdef)))
     sort_order = to_sort_orders(cdef)
     sort_orders = array(sort_order)
@@ -310,7 +310,7 @@ def _class_list_query(cdef: Cdef) -> str:
     return codable_struct_class(to_list_query(cdef), items)
 
 
-def _class_result(cdef: Cdef) -> str:
+def _class_result(cdef: CDef) -> str:
     items: list[str] = []
     for field in cdef.fields:
         if not field_can_read(field):
