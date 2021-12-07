@@ -1,8 +1,17 @@
 from jsonclasses.cdef import CDef
+from jsonclasses.cgraph import CGraph
 
 
 def class_needs_api(cdef: CDef) -> bool:
     return hasattr(cdef.cls, 'aconf')
+
+
+def session_input_cdefs(cgraph: CGraph) -> list[CDef]:
+    items: list[CDef]  = []
+    for cdef in cgraph._map.values():
+        if class_needs_session(cdef):
+            items.append(cdef)
+    return items
 
 
 def class_needs_session(cdef: CDef) -> bool:
@@ -63,3 +72,7 @@ def to_include(cdef: CDef) -> str:
 
 def to_sort_orders(cdef: CDef) -> str:
     return cdef.name + 'SortOrder'
+
+
+def to_session_input(cdef: CDef) -> str:
+    return cdef.name + 'SessionInput'

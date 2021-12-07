@@ -19,6 +19,7 @@ from .sign_out import sign_out
 from .request_manager import request_manager
 from .data_requests_and_clients import data_requests_and_clients, data_client_instances
 from ...utils.join_lines import join_lines
+from ...utils.package_utils import session_input_cdefs
 
 
 def main_program_content(cgraph: CGraph) -> str:
@@ -37,7 +38,7 @@ def main_program_content(cgraph: CGraph) -> str:
         sort_order(),
         *map(lambda e: data_enum(e), cgraph._enum_map.values()),
         *map(lambda c: data_class(c), cgraph._map.values()),
-        *map(lambda c: session_input(c), cgraph._map.values()),
+        *map(lambda c: session_input(c), session_input_cdefs(cgraph)),
         session(session_classes) if use_session else '',
         response_struct(),
         user_default(),
