@@ -89,8 +89,8 @@ def is_field_required_for_create(field: JField) -> bool:
 
 
 def field_ref_id_name(field: JField) -> str:
-    rkes = field.cdef.jconf.ref_key_encoding_strategy
-    kes = field.cdef.jconf.key_encoding_strategy
+    rkes = field.cdef.jconf.ref_name_strategy
+    kes = field.cdef.jconf.input_key_strategy
     return kes(rkes(field))
 
 
