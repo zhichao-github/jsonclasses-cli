@@ -1,35 +1,26 @@
 def string_query() -> str:
-    return ('interface StringContainsQuery {\n'
-        '    _contains: string\n'
-        '}\n'
-        '\n'
-        'interface StringPrefixQuery {\n'
-        '    _prefix: string\n'
-        '}\n'
-        '\n'
-        'interface StringSuffixQuery {\n'
-        '    _suffix: string\n'
-        '}\n'
-        '\n'
-        'interface StringMatchQuery {\n'
-        '    _match: string\n'
-        '}\n'
-        '\n'
-        'interface StringContainsiQuery {\n'
-        '    _containsi: string\n'
-        '}\n'
-        '\n'
-        'interface StringPrefixiQuery {\n'
-        '    _prefixi: string\n'
-        '}\n'
-        '\n'
-        'interface StringSuffixiQuery {\n'
-        '    _suffixi: string\n'
-        '}\n'
-        '\n'
-        'interface StringMatchiQuery {\n'
-        '    _matchi: string\n'
-        '}\n'
-        '\n'
-        'export type StringQuery = string | StringContainsQuery | StringPrefixQuery | StringSuffixQuery | StringMatchQuery | StringContainsiQuery | StringPrefixiQuery | StringSuffixiQuery | StringMatchiQuery\n'
-        )
+    return """
+type Mode = 'default' | 'insensitive'
+
+interface StringContainsQuery {
+    _contains: string
+    _mode?: Mode
+}
+
+interface StringPrefixQuery {
+    _prefix: string
+    _mode?: Mode
+}
+
+interface StringSuffixQuery {
+    _suffix: string
+    _mode?: Mode
+}
+
+interface StringMatchQuery {
+    _match: string
+    _mode?: Mode
+}
+
+export type StringQuery = string | StringContainsQuery | StringPrefixQuery | StringSuffixQuery | StringMatchQuery
+    """.strip() + "\n"
