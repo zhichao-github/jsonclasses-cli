@@ -7,7 +7,6 @@ from jsonclasses.cgraph import CGraph
 from .kotlin import kotlin
 from .swift import swift
 from .ts import ts
-from .test import test
 
 
 def package(dest: Path, app_file: Path, lang: Literal['ts', 'swift', 'kotlin']):
@@ -21,5 +20,3 @@ def package(dest: Path, app_file: Path, lang: Literal['ts', 'swift', 'kotlin']):
             kotlin(dest, cgraph)
         case 'ts':
             ts(dest, cgraph)
-        case 'test':
-            test(dest, cgraph)

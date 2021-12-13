@@ -1,6 +1,6 @@
 from enum import Enum
 from inflection import camelize
-from jsonclasses_cli.package.test.interface_enum import interface_enum, interface_enum_item
+from jsonclasses_cli.package.ts.interface_enum import interface_enum, interface_enum_item
 
 
 def data_enum(enum: type[Enum]) -> str:
