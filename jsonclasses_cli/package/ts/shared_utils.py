@@ -1,5 +1,5 @@
 from inflection import camelize
-from jsonclasses.cdef import Cdef
+from jsonclasses.cdef import CDef
 from jsonclasses.jfield import JField
 from jsonclasses.fdef import (
     FStore, FType, Nullability, ReadRule, Queryability, WriteRule
@@ -9,7 +9,7 @@ from jsonclasses.modifiers.default_modifier import DefaultModifier
 from .jtype_to_ts_type import jtype_to_ts_type
 
 
-def list_query_items(cdef: Cdef) -> list[tuple[str, str]]:
+def list_query_items(cdef: CDef) -> list[tuple[str, str]]:
     items: list[tuple[str, str]] = []
     for field in cdef.fields:
         if not is_field_queryable(field):
@@ -42,8 +42,8 @@ def is_field_required_null_for_update(field: JField):
 
 
 def field_ref_id_name(field: JField) -> str:
-    rkes = field.cdef.jconf.ref_key_encoding_strategy
-    kes = field.cdef.jconf.key_encoding_strategy
+    rkes = field.cdef.jconf.ref_name_strategy
+    kes = field.cdef.jconf.input_key_strategy
     return kes(rkes(field))
 
 
@@ -108,7 +108,7 @@ def field_can_read(field: JField) -> bool:
     return True
 
 
-def class_required_include(cdef: Cdef) -> bool:
+def class_required_include(cdef: CDef) -> bool:
     items = [f for f in cdef.fields if is_field_ref(f)]
     return len(items) > 0
 
