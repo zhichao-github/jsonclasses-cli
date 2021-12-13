@@ -7,8 +7,8 @@ def session_input(cdef: Cdef) -> str:
     items: list[InterfaceItem] = []
     (identities, bys) = _session_input_items(cdef)
     use_session = hasattr(cdef.cls, 'auth_conf')
-    identities_optional = len(identities) > 1
-    bys_optional = len(bys) > 1
+    identities_optional = len(identities) != 1
+    bys_optional = len(bys) != 1
     for (n, t) in identities.items():
         items.append(interface_item(n, t, identities_optional))
     for (n, t) in bys.items():
