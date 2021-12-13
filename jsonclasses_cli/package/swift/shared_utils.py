@@ -1,5 +1,6 @@
 from inflection import camelize
 from jsonclasses.cdef import CDef
+from jsonclasses.cgraph import CGraph
 from jsonclasses.jfield import JField
 from jsonclasses.fdef import (
     FStore, FType, Nullability, ReadRule, Queryability, WriteRule
@@ -78,7 +79,6 @@ def class_create_input_items(cdef: CDef) -> list[CodableClassItem]:
             item = codable_class_item('public', 'var', idname, 'String', True)
             items.append(item)
     return items
-
 
 def is_field_required_for_create(field: JField) -> bool:
     if field_has_default(field):
