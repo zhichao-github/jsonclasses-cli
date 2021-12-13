@@ -1,6 +1,6 @@
 from inflection import camelize
 from jsonclasses.fdef import FType
-from jsonclasses.cdef import Cdef
+from jsonclasses.cdef import CDef
 from .interface import (
     interface, interface_first_line, interface_include_item, interface_include_key_item, interface_inst_items,
     interface_item, interface_pick_omit_items, interface_type_item, list_query_limit_skip_pn_ps, list_query_order_item)
@@ -16,7 +16,7 @@ from ...utils.join_lines import join_lines
 from .jtype_to_ts_type import jtype_to_ts_type
 
 
-def data_interface(cdef: Cdef) -> str:
+def data_interface(cdef: CDef) -> str:
     return join_lines([
         _interface_result(cdef),
         _interface_create_input(cdef),
@@ -30,7 +30,7 @@ def data_interface(cdef: Cdef) -> str:
     ], 2)
 
 
-def _interface_result(cdef: Cdef) -> str:
+def _interface_result(cdef: CDef) -> str:
     items: list[str] = []
     for field in cdef.fields:
         if not field_can_read(field):
@@ -51,7 +51,7 @@ def _interface_result(cdef: Cdef) -> str:
     return interface(name, items)
 
 
-def _interface_create_input(cdef: Cdef) -> str:
+def _interface_create_input(cdef: CDef) -> str:
     items: list[str] = []
     for field in cdef.fields:
         if not field_can_create(field):
@@ -73,7 +73,7 @@ def _interface_create_input(cdef: Cdef) -> str:
     return interface(name, items)
 
 
-def _interface_update_input(cdef: Cdef) -> str:
+def _interface_update_input(cdef: CDef) -> str:
     items: list[str] = []
     for field in cdef.fields:
         if not field_can_update(field):
@@ -94,7 +94,7 @@ def _interface_update_input(cdef: Cdef) -> str:
     return interface(name, items)
 
 
-def _interface_sort_order(cdef: Cdef) -> str:
+def _interface_sort_order(cdef: CDef) -> str:
     items: list[str] = []
     for field in cdef.fields:
         if not is_field_queryable(field):
@@ -112,7 +112,7 @@ def _interface_sort_order(cdef: Cdef) -> str:
     return interface_type_item(name, items)
 
 
-def _interface_result_pick(cdef: Cdef) -> str:
+def _interface_result_pick(cdef: CDef) -> str:
     items: list[str] = []
     for field in cdef.fields:
         if not field_can_read(field):
@@ -126,7 +126,7 @@ def _interface_result_pick(cdef: Cdef) -> str:
     return interface_type_item(name, items)
 
 
-def _interface_include_keys(cdef: Cdef) -> str:
+def _interface_include_keys(cdef: CDef) -> str:
     cname = cdef.name
     keys: list[str] = []
     for field in cdef.fields:
@@ -150,7 +150,7 @@ def _interface_include_key(name: str, key: str, ftype: str) -> str:
     ])
 
 
-def _interface_include_type(cdef: Cdef) -> str:
+def _interface_include_type(cdef: CDef) -> str:
     cname = cdef.name
     include = to_include(cdef)
     include_types: list[str] = []
@@ -161,7 +161,7 @@ def _interface_include_type(cdef: Cdef) -> str:
     return interface_type_item(include, include_types) if len(include_types) else ""
 
 
-def _interface_single_query(cdef: Cdef) -> str:
+def _interface_single_query(cdef: CDef) -> str:
     name = to_single_query(cdef)
     result_pick_name = to_result_picks(cdef)
     return join_lines([
@@ -172,12 +172,12 @@ def _interface_single_query(cdef: Cdef) -> str:
     ])
 
 
-def _single_query_include(cdef: Cdef) -> str:
+def _single_query_include(cdef: CDef) -> str:
     name = to_include(cdef)
     return interface_include_item(name) if class_required_include(cdef) else ""
 
 
-def _interface_list_query(cdef: Cdef) -> str:
+def _interface_list_query(cdef: CDef) -> str:
     name = to_list_query(cdef)
     items = list(map(lambda i: interface_item(i[0], i[1], True), list_query_items(cdef)))
     order = to_sort_orders(cdef)
