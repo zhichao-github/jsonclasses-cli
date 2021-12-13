@@ -1,9 +1,9 @@
-from jsonclasses.cdef import Cdef
+from jsonclasses.cdef import CDef
 from .interface import InterfaceItem, interface, interface_item
 from .jtype_to_ts_type import jtype_to_ts_type
 
 
-def session_input(cdef: Cdef) -> str:
+def session_input(cdef: CDef) -> str:
     items: list[InterfaceItem] = []
     (identities, bys) = _session_input_items(cdef)
     identities_optional = len(identities) != 1
@@ -16,7 +16,7 @@ def session_input(cdef: Cdef) -> str:
     return interface(name, items)
 
 
-def _session_input_items(cdef: Cdef) -> tuple[dict[str, str], dict[str, str]]:
+def _session_input_items(cdef: CDef) -> tuple[dict[str, str], dict[str, str]]:
     identities: dict[str, str] = {}
     bys: dict[str, str] = {}
     for field in cdef.fields:
