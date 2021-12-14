@@ -17,7 +17,7 @@ public enum StringQuery: Codable {
 
     public enum Mode: String, Codable {
         case `default` = "default"
-        case caseInsensitive = "caseInsensitive"
+        case caseInsensitive = "insensitive"
     }
 
     public enum CodingKeys: String, CodingKey {
