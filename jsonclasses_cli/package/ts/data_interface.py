@@ -35,7 +35,7 @@ def _interface_result(cdef: CDef) -> str:
     for field in cdef.fields:
         if not field_can_read(field):
             continue
-        name = field.json_name
+        name = camelize(field.name, False)
         ftype = jtype_to_ts_type(field.fdef, 'R')
         optional = not is_field_required_for_read(field)
         item = interface_item(name, ftype, optional)
@@ -57,7 +57,7 @@ def _interface_create_input(cdef: CDef) -> str:
         if not field_can_create(field):
             continue
         optional = not is_field_required_for_create(field)
-        name = field.json_name
+        name = camelize(field.name, False)
         ftype = jtype_to_ts_type(field.fdef, 'C')
         optional = not is_field_required_for_read(field)
         item = interface_item(name, ftype, optional)
@@ -79,7 +79,7 @@ def _interface_update_input(cdef: CDef) -> str:
         if not field_can_update(field):
             continue
         null_for_update = '' if is_field_required_null_for_update(field) else ' | null'
-        name = field.json_name
+        name = camelize(field.name, False)
         ftype = jtype_to_ts_type(field.fdef, 'U') + null_for_update
         item = interface_item(name, ftype, True)
         items.append(item)
