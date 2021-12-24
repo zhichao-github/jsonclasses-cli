@@ -10,8 +10,8 @@ from .shared_utils import (
     field_can_update, is_list_field, is_field_required_null_for_update, list_query_items, string,
     is_field_queryable, to_include_name)
 from ...utils.package_utils import (
-    to_create_input, to_include, to_list_query, to_result, to_result_picks, to_single_query,
-    to_sort_orders, to_update_input)
+    to_create_input, to_include, to_list_query, to_result, to_result_picks, to_seek_query, to_single_query,
+    to_sort_orders, to_update_input, to_upsert_input)
 from ...utils.join_lines import join_lines
 from .jtype_to_ts_type import jtype_to_ts_type
 
@@ -27,6 +27,8 @@ def data_interface(cdef: CDef) -> str:
         _interface_include_type(cdef),
         _interface_single_query(cdef),
         _interface_list_query(cdef),
+        _interface_seek_query(cdef),
+        _interface_upsert_input(cdef),
     ], 2)
 
 
@@ -189,5 +191,28 @@ def _interface_list_query(cdef: CDef) -> str:
         list_query_limit_skip_pn_ps(),
         interface_pick_omit_items(pick),
         _single_query_include(cdef),
+        '}'
+    ])
+
+
+def _interface_seek_query(cdef: CDef) -> str:
+    name = to_seek_query(cdef)
+    items = list(map(lambda i: interface_item(i[0], i[1], True), list_query_items(cdef)))
+    return join_lines([
+        interface_first_line(name),
+        interface_inst_items(items),
+        '}'
+    ])
+
+
+def _interface_upsert_input(cdef: CDef) -> str:
+    name = to_upsert_input(cdef)
+    items = [
+        interface_item('_query', to_seek_query(cdef), False),
+        interface_item('_data', to_update_input(cdef), False)
+    ]
+    return join_lines([
+        interface_first_line(name),
+        interface_inst_items(items),
         '}'
     ])
