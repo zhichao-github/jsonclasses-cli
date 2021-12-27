@@ -58,8 +58,8 @@ def to_seek_query(cdef: CDef) -> str:
     return cdef.name + 'SeekQuery'
 
 
-def to_upsert_input(cdef: CDef) -> str:
-    return cdef.name + 'UpsertInput'
+def to_query_data(cdef: CDef) -> str:
+    return cdef.name + 'QueryData'
 
 
 def to_result(cdef: CDef) -> str:
