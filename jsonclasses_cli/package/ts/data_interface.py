@@ -11,7 +11,7 @@ from .shared_utils import (
     is_field_queryable, to_include_name)
 from ...utils.package_utils import (
     to_create_input, to_include, to_list_query, to_result, to_result_picks, to_seek_query, to_single_query,
-    to_sort_orders, to_update_input, to_upsert_input)
+    to_sort_orders, to_update_input, to_query_data)
 from ...utils.join_lines import join_lines
 from .jtype_to_ts_type import jtype_to_ts_type
 
@@ -28,7 +28,7 @@ def data_interface(cdef: CDef) -> str:
         _interface_single_query(cdef),
         _interface_list_query(cdef),
         _interface_seek_query(cdef),
-        _interface_upsert_input(cdef),
+        _interface_query_data(cdef),
     ], 2)
 
 
@@ -205,8 +205,8 @@ def _interface_seek_query(cdef: CDef) -> str:
     ])
 
 
-def _interface_upsert_input(cdef: CDef) -> str:
-    name = to_upsert_input(cdef)
+def _interface_query_data(cdef: CDef) -> str:
+    name = to_query_data(cdef)
     items = [
         interface_item('_query', to_seek_query(cdef), False),
         interface_item('_data', to_update_input(cdef), False)
