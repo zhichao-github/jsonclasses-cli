@@ -25,8 +25,8 @@ def data_requests_and_clients(cdef: CDef) -> str:
 def _data_query_request_common(cdef: CDef, request: str) -> str:
     return join_lines([f"""
 pick(picks: {to_result_picks(cdef)}[]): {request}<Pick<T, typeof picks[number]>> {'{'}
-    this.#query = {'{'}...this.#query, _pick: picks{'}'}
-    return this
+        this.#query = {'{'}...this.#query, _pick: picks{'}'}
+        return this
     {'}'}
 
     omit(omits: {to_result_picks(cdef)}[]): {request}<Omit<T, typeof omits[number]>> {'{'}
