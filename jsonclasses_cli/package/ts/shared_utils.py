@@ -1,26 +1,12 @@
 from inflection import camelize
 from jsonclasses.cdef import CDef
-from jsonclasses.cgraph import CGraph
 from jsonclasses.jfield import JField
 from jsonclasses.fdef import (
     FStore, FType, Nullability, ReadRule, Queryability, WriteRule
 )
 from jsonclasses.modifiers.required_modifier import RequiredModifier
 from jsonclasses.modifiers.default_modifier import DefaultModifier
-from .codable_class import CodableClassItem, codable_class_item
-from .jtype_to_swift_type import jtype_to_swift_type
-from ...utils.package_utils import to_list_query, to_single_query
-
-
-def class_include_items(cdef: CDef) -> list[tuple[str, str]]:
-    items: list[tuple[str, str]] = []
-    for field in cdef.fields:
-        if is_field_ref(field):
-            if field.fdef.ftype == FType.LIST:
-                items.append((field.name, to_list_query(field.foreign_cdef)))
-            else:
-                items.append((field.name, to_single_query(field.foreign_cdef)))
-    return items
+from .jtype_to_ts_type import jtype_to_ts_type
 
 
 def list_query_items(cdef: CDef) -> list[tuple[str, str]]:
@@ -29,12 +15,9 @@ def list_query_items(cdef: CDef) -> list[tuple[str, str]]:
         if not is_field_queryable(field):
             continue
         name = camelize(field.name, False)
-        type = jtype_to_swift_type(field.fdef, 'Q')
+        type = jtype_to_ts_type(field.fdef, 'Q')
         if is_field_ref(field):
-            if not is_field_local_key(field):
-                continue
-            idname = field_ref_id_name(field)
-            items.append((idname, 'IDQuery'))
+            continue
         else:
             items.append((name, type))
     return items
@@ -44,45 +27,15 @@ def is_field_local_key(field: JField) -> bool:
     return field.fdef.fstore == FStore.LOCAL_KEY
 
 
-def class_update_input_items(cdef: CDef) -> list[CodableClassItem]:
-    items: list[CodableClassItem] = []
-    for field in cdef.fields:
-        if not field_can_update(field):
-            continue
-        name = camelize(field.name, False)
-        stype = jtype_to_swift_type(field.fdef, 'U')
-        local_key = is_field_local_key(field)
-        item = codable_class_item('public', 'var', name, stype, True)
-        items.append(item)
-        if local_key:
-            idname = field_ref_id_name(field)
-            item = codable_class_item('public', 'var', idname, 'String', True)
-            items.append(item)
-    return items
-
-
-def class_create_input_items(cdef: CDef) -> list[CodableClassItem]:
-    items: list[CodableClassItem] = []
-    for field in cdef.fields:
-        if not field_can_create(field):
-            continue
-        optional = not is_field_required_for_create(field)
-        name = camelize(field.name, False)
-        stype = jtype_to_swift_type(field.fdef, 'C')
-        local_key = is_field_local_key(field)
-        if local_key:
-            optional = True
-        item = codable_class_item('public', 'var', name, stype, optional)
-        items.append(item)
-        if local_key:
-            idname = field_ref_id_name(field)
-            item = codable_class_item('public', 'var', idname, 'String', True)
-            items.append(item)
-    return items
-
 def is_field_required_for_create(field: JField) -> bool:
     if field_has_default(field):
         return False
+    if is_field_nonnull(field):
+        return True
+    return next((True for v in field.types.modifier.vs if isinstance(v, RequiredModifier)), False)
+
+
+def is_field_required_null_for_update(field: JField):
     if is_field_nonnull(field):
         return True
     return next((True for v in field.types.modifier.vs if isinstance(v, RequiredModifier)), False)
@@ -155,5 +108,18 @@ def field_can_read(field: JField) -> bool:
     return True
 
 
-def array(val: str) -> str:
-    return '[' + val + ']'
+def class_required_include(cdef: CDef) -> bool:
+    items = [f for f in cdef.fields if is_field_ref(f)]
+    return len(items) > 0
+
+
+def is_list_field(field: JField) -> bool:
+    return field.fdef.ftype == FType.LIST
+
+
+def to_include_name(cname: str, name: str) -> str:
+    return cname + camelize(name) + 'Include'
+
+
+def string(val: str) -> str:
+    return "'" +val +"'"

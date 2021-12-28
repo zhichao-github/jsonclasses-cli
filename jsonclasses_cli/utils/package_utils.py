@@ -54,6 +54,14 @@ def to_list_query(cdef: CDef) -> str:
     return cdef.name + 'ListQuery'
 
 
+def to_seek_query(cdef: CDef) -> str:
+    return cdef.name + 'SeekQuery'
+
+
+def to_query_data(cdef: CDef) -> str:
+    return cdef.name + 'QueryData'
+
+
 def to_result(cdef: CDef) -> str:
     return cdef.name
 
