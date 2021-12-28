@@ -5,7 +5,7 @@ from .interface import (
     interface, interface_first_line, interface_include_item, interface_include_key_item, interface_inst_items,
     interface_item, interface_pick_omit_items, interface_type_item, list_query_limit_skip_pn_ps, list_query_order_item)
 from .shared_utils import (
-    class_required_include, field_ref_id_name, is_field_local_key, is_field_primary,
+    interface_required_include, field_ref_id_name, is_field_local_key, is_field_primary,
     is_field_ref, is_field_required_for_read, field_can_read, field_can_create, is_field_required_for_create,
     field_can_update, is_list_field, is_field_required_null_for_update, list_query_items, string,
     is_field_queryable, to_include_name)
@@ -176,7 +176,7 @@ def _interface_single_query(cdef: CDef) -> str:
 
 def _single_query_include(cdef: CDef) -> str:
     name = to_include(cdef)
-    return interface_include_item(name) if class_required_include(cdef) else ""
+    return interface_include_item(name) if interface_required_include(cdef) else ""
 
 
 def _interface_list_query(cdef: CDef) -> str:

@@ -108,7 +108,7 @@ def field_can_read(field: JField) -> bool:
     return True
 
 
-def class_required_include(cdef: CDef) -> bool:
+def interface_required_include(cdef: CDef) -> bool:
     items = [f for f in cdef.fields if is_field_ref(f)]
     return len(items) > 0
 
