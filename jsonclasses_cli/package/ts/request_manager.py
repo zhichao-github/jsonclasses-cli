@@ -36,7 +36,7 @@ class RequestManager {"{"}
         return response.data.data
     {"}"}
 
-    async delete(url: string, query: V | undefined = undefined): Promise<void> {"{"}
+    async delete<V>(url: string, query: V | undefined = undefined): Promise<void> {"{"}
         await axios.delete(this.#baseURL + url + this.qs(query), this.headers)
         return
     {"}"}
