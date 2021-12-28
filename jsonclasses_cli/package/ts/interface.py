@@ -39,7 +39,7 @@ def interface_include_item(name: str) -> str:
 
 
 def list_query_order_item(name: str) -> str:
-    return f"    _order?: {name}[]"
+    return f"    _order?: {name} | {name}[]"
 
 
 def list_query_limit_skip_pn_ps() -> str:
