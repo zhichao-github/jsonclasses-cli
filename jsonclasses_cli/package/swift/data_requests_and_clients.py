@@ -6,7 +6,7 @@ from .codable_class import CodableClassItem
 from .shared_utils import class_create_input_items, class_include_items, class_update_input_items, list_query_items
 from ...utils.join_lines import join_lines
 from ...utils.package_utils import (
-    class_needs_api, class_needs_session, to_create_input, to_create_request, to_delete_request,
+    class_needs_api, class_needs_session, to_client, to_create_input, to_create_request, to_delete_request,
     to_id_request, to_list_query, to_list_request, to_list_result, to_result_picks, to_single_query,
     to_update_input, to_result, to_update_request, to_sort_orders, to_include
 )
@@ -17,8 +17,7 @@ def data_client_instances(cdef: CDef) -> str:
         return ''
     aconf = cast(AConf, cdef.cls.aconf)
     var_name = camelize(underscore(aconf.name), False)
-    client_name = cdef.name + 'Client'
-    return f'public var {var_name} = {client_name}()'
+    return f'public var {var_name} = {to_client(cdef)}()'
 
 
 def data_requests_and_clients(cdef: CDef) -> str:
@@ -229,7 +228,7 @@ def _data_find_request(cdef: CDef, name: str) -> str:
 
 def _data_client(cdef: CDef, aconf: AConf) -> str:
     return join_lines([
-        f'public struct {cdef.name}Client {"{"}',
+        f'public struct {to_client(cdef)} {"{"}',
         '\n',
         '    fileprivate init() { }',
         '\n',
