@@ -1,10 +1,11 @@
 from typing import cast
 from jsonclasses.cdef import CDef
 from jsonclasses_server.aconf import AConf
+from .shared_utils import interface_required_include
 from ...utils.join_lines import join_lines
 from ...utils.package_utils import (
     class_needs_api, to_create_input, to_create_request, to_delete_request,
-    to_id_request, to_list_query, to_list_request, to_result_picks, to_single_query,
+    to_id_request, to_list_query, to_list_request, to_result, to_result_picks, to_single_query,
     to_update_input, to_update_request, to_sort_orders, to_include
 )
 
@@ -21,62 +22,72 @@ def data_requests_and_clients(cdef: CDef) -> str:
         _data_client(cdef,aconf)
     ], 2)
 
+def _data_query_request_common(cdef: CDef, request: str) -> str:
+    return f"""
+    pick(picks: {to_result_picks(cdef)}[]): {request}<Pick<T, typeof picks[number]>> {'{'}
+        this.#query = {'{'}...this.#query, _pick: picks{'}'}
+        return this
+    {'}'}
+
+    omit(omits: {to_result_picks(cdef)}[]): {request}<Omit<T, typeof omits[number]>> {'{'}
+        this.#query = {'{'}...this.#query, _omit: omits{'}'}
+        return this
+    {'}'}
+    """.strip() + "\n"
+
+def _data_query_request_includes(cdef: CDef, request: str) -> str:
+    if interface_required_include(cdef):
+        return f""" 
+    include(includes: {to_include(cdef)}[]): {request}<T> {'{'}
+        this.#query = {'{'}...this.#query, _includes: includes {'}'}
+        return this
+    {'}'}
+        """.strip() + "\n"
+        
+    return ''
+
 def _data_create_requet(cdef:CDef, name:str) -> str:
     return f"""
-class {to_create_request(cdef)}<T extends Partial<User>> extends Promise<T> {'{'}
+class {to_create_request(cdef)}<T extends Partial<{to_result(cdef)}>> extends Promise<T> {'{'}
     #input: {to_create_input(cdef)}
-    #query: {to_single_query(cdef)}?
+    #query?: {to_single_query(cdef)}
 
     constructor(input: {to_create_input(cdef)}, query?:{to_single_query(cdef)}){'{'}
-        super((resolve, reject)) => {'{'}
+        super((resolve, reject) => {'{'}
             this.exec()
-        {'}'}
+        {'}'})
         this.#input = input,
         this.#query = query
     {'}'}
-    pick(picks: {to_result_picks(cdef)}[]): {to_create_request(cdef)}<Pick<T, typeof picks[number]>>){'{'}
-        this.#query = {'{'}...this.#query, _pick: picks{'}'}
-    {'}'}
-    omit(omits: {to_result_picks(cdef)}[]): {to_create_request(cdef)}<Omit<T, typeof omits[number]>>{'{'}
-        this.#query = {'{'}...this.#query, _omit: omits{'}'}
-    {'}'}
-    include(includes: {to_include(cdef)}[]): {to_create_request(cdef)}<T> {'{'}
-        this.#query = {'{'}...this.#query, _includes: includes {'}'}
-    {'}'}
+
+    {_data_query_request_common(cdef,to_create_request(cdef))}
+    {_data_query_request_includes(cdef, to_create_request(cdef))}
     async exec(): Promise<T> {'{'}
-        return await RequestManager.share.{name}('/users', this.#input, this.#query)
+        return await RequestManager.share.post('/{name}', this.#input, this.#query)
     {'}'}
 {'}'}
     """.strip() + "\n"
 
 def _data_update_request(cdef:CDef, name:str) -> str:
     return f"""
-class {to_update_request(cdef)}<T extends Partial<User> extends promise<T> {'{'}
+class {to_update_request(cdef)}<T extends Partial<{to_result(cdef)}>> extends Promise<T> {'{'}
     #id: string
     #input: {to_update_input(cdef)}
     #query?: {to_single_query(cdef)}
 
-    constructor(id:string, input: {to_update_input(cdef)}, query?: {to_single_query(cdef)}) {'{'}
-        super((resolve, reject)) => {'{'}
+    constructor(id:string, input: {to_update_input(cdef)}, query?: {to_single_query(cdef)},) {'{'}
+        super((resolve, reject) => {'{'}
             this.exec()
-        {'}'}
+        {'}'})
         this.#id = id
         this.#input = input,
         this.#query = query
-        {'}'}
+    {'}'}
 
-    pick(picks: {to_result_picks(cdef)}[]: {to_update_request(cdef)}<Pick<T, typeof picks[numbers]>>) {'{'}
-        this.#query = {'{'}...this.#query, _pick: picks {'}'}
-        return this
-    {'}'}
-    omit(omits: {to_result_picks(cdef)}[]): {to_update_request(cdef)}<Omit<T, typeof omits[number]>>{'{'}
-        this.#query = {'{'}...this.#query, _omit: omits{'}'}
-    {'}'}
-    include(includes: {to_include(cdef)}[]): {to_update_request(cdef)}<T> {'{'}
-        this.#query = {'{'}...this.#query, _includes: includes {'}'}
-    {'}'}
+    {_data_query_request_common(cdef, to_update_request(cdef))}
+    {_data_query_request_includes(cdef, to_update_request(cdef))}
     async exec(): Promise<User> {'{'}
-        return await RequestManager.share.{name}('/users/${'{'}this.#id{'}'}', this.#input, this.#query)
+        return await RequestManager.share.patch(`/{name}/${'{'}this.#id{'}'}`, this.#input, this.#query)
     {'}'}
 {'}'}
 """.strip() + "\n"
@@ -87,54 +98,43 @@ class {to_delete_request(cdef)} extends Promise<void> {'{'}
     #id: string
 
     constructor(id: string) {'{'}
-        super((resolve, reject)) => {'{'}
+        super((resolve, reject) => {'{'}
             this.exec()
-        {'}'}
+        {'}'})
         this.#id = id
     {'}'}
     async exec(): Promise<void> {'{'}
-        return await RequestManager.share.{name}('/users/${'{'}this.#id{'}'}')
+        return await RequestManager.share.delete(`/{name}/${'{'}this.#id{'}'}`)
     {'}'}
 {'}'}
 """.strip() + "\n"
 
 def _data_id_request(cdef:CDef, name:str) -> str:
     return f"""
-class {to_id_request(cdef)}<T extends Partial<User>> extends Promise<T> {'{'}
+class {to_id_request(cdef)}<T extends Partial<{to_result(cdef)}>> extends Promise<T> {'{'}
     #id: string
-    #query: {to_single_query(cdef)}
+    #query?: {to_single_query(cdef)}
 
     constructor(id: string, query?: {to_single_query(cdef)}) {'{'}
-        super((resolve, reject)) => {'{'}
+        super((resolve, reject) => {'{'}
         this.exec()
-    {'}'}
-        this.#input = input,
+    {'}'})
+        this.#id = id,
         this.#query = query
     {'}'}
 
-    pick(picks: {to_result_picks(cdef)}[]: {to_id_request(cdef)}<Pick<T, typeof picks[numbers]>>) {'{'}
-        this.#query = {'{'}...this.#query, _pick: picks {'}'}
-        return this
-    {'}'}
-
-    omit(omits: {to_result_picks(cdef)}[]): {to_id_request(cdef)}<Omit<T, typeof omits[number]>>{'{'}
-        this.#query = {'{'}...this.#query, _omit: omits{'}'}
-    {'}'}
-
-    include(includes: {to_include(cdef)}[]): {to_id_request(cdef)}<T> {'{'}
-        this.#query = {'{'}...this.#query, _includes: includes {'}'}
-    {'}'}
-
+    {_data_query_request_common(cdef, to_id_request(cdef))}
+    { _data_query_request_includes(cdef, to_id_request(cdef))}
     async exec(): Promise<User> {'{'}
-        return await RequestManager.share.{name}('/users/${'{'}this.#id{'}'}', this.#query)
+        return await RequestManager.share.get(`/{name}/${'{'}this.#id{'}'}`, this.#query)
     {'}'}
 {'}'}
 """.strip() + "\n"
 
 def _data_list_request(cdef:CDef, name:str) -> str:
     return f"""
-class {to_list_request(cdef)}<T extends Partial<User>> extends Promise<T []> {'{'}
-    #query?: {to_list_request(cdef)}
+class {to_list_request(cdef)}<T extends Partial<{to_result(cdef)}>> extends Promise<T[]> {'{'}
+    #query?: {to_list_query(cdef)}
 
     constructor(query?: {to_list_query(cdef)}) {'{'}
         super((resolve,reject) => {'{'}
@@ -143,7 +143,7 @@ class {to_list_request(cdef)}<T extends Partial<User>> extends Promise<T []> {'{
         this.#query = query
     {'}'}
 
-    order(order: {to_sort_orders(cdef)} | {to_sort_orders(cdef)}[]): {to_list_request}<T> {'{'}
+    order(order: {to_sort_orders(cdef)} | {to_sort_orders(cdef)}[]): {to_list_request(cdef)}<T> {'{'}
         this.#query = {'{'}...this.#query, _order: order{'}'}
         return this
     {'}'}
@@ -154,7 +154,7 @@ class {to_list_request(cdef)}<T extends Partial<User>> extends Promise<T []> {'{
     {'}'}
 
     limt(limit: number): {to_list_request(cdef)}<T> {'{'}
-        this.#query = {'{'}...this.query, _limit:limit{'}'}
+        this.#query = {'{'}...this.#query, _limit:limit{'}'}
         return this
     {'}'}
 
@@ -165,25 +165,13 @@ class {to_list_request(cdef)}<T extends Partial<User>> extends Promise<T []> {'{
 
     pageNo(pageNo: number): {to_list_request(cdef)}<T> {'{'}
         this.#query = {'{'}...this.#query, _pageNo: pageNo{'}'}
-    {'}'}
-
-    pick(picks: {to_result_picks(cdef)}[]): {to_list_request(cdef)}<Pick<T, typeof picks[number]>> {'{'}
-        this.#query = {'{'}...this.#query, _pick:picks{'}'}
         return this
     {'}'}
 
-    omit(omits: {to_result_picks(cdef)}[]): {to_list_request(cdef)}<Omit<T>, typeof omits[number]>> {'{'}
-        this.#query = {'{'}...this.#query, _omit: omits{'}'}
-        return this
-    {'}'}
-
-    include(includes: {to_include(cdef)}[]): {to_list_request(cdef)}<T> {'{'}
-        this.#query = {'{'}...this.#query, _includes: includes{'}'}
-        return this
-    {'}'}
-
+    {_data_query_request_common(cdef, to_list_request(cdef))}
+    {_data_query_request_includes(cdef, to_list_request(cdef))}
     exec(): Promise<User[]> {'{'}
-        return RequestManager.share.{name}('/users',this.#query)
+        return RequestManager.share.get('/{name}',this.#query)
     {'}'}
 {'}'}
 """.strip() + "\n"
@@ -198,9 +186,9 @@ class {cdef.name}Client {'{'}
 
     update(id: string, input: {to_update_input(cdef)}, query?: {to_single_query(cdef)}): {to_update_request(cdef)}<User> {'{'}
         return new {to_update_request(cdef)}(id, input, query)
-{'}'}
+    {'}'}
 
-    delete(id: sting): {to_delete_request(cdef)} {'{'}
+    delete(id: string): {to_delete_request(cdef)} {'{'}
         return new {to_delete_request(cdef)}(id)
     {'}'}
 
