@@ -33,7 +33,8 @@ def main_program_content(cgraph: CGraph) -> str:
         session_manager(session_classes) if use_session else '',
         request_manager('http://127.0.0.1:5000'),
         *map(lambda c: data_requests_and_clients(c), cgraph._map.values()),
-        class_api(cgraph)
+        class_api(cgraph),
+        _export_api()
     ], 3)
 
 
@@ -42,3 +43,6 @@ def _import_lines() -> str:
 import axios from 'axios'
 import { stringify } from 'qsparser-js'
     """.strip()
+
+def _export_api() -> str:
+    return "export const api = new API()"

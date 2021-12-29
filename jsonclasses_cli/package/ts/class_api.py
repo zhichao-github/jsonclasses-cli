@@ -7,7 +7,7 @@ from ...utils.join_lines import join_lines
 
 def class_api(cgraph: CGraph) -> str:
     return join_lines([
-        'export class API {',
+        'class API {',
         *map(lambda c: _client_item(c), cgraph._map.values()),
         _sign_out(),
         '}'
