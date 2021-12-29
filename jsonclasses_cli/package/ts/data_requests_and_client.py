@@ -23,8 +23,8 @@ def data_requests_and_clients(cdef: CDef) -> str:
     ], 2)
 
 def _data_query_request_common(cdef: CDef, request: str) -> str:
-    return join_lines([f"""
-pick(picks: {to_result_picks(cdef)}[]): {request}<Pick<T, typeof picks[number]>> {'{'}
+    return f"""
+    pick(picks: {to_result_picks(cdef)}[]): {request}<Pick<T, typeof picks[number]>> {'{'}
         this.#query = {'{'}...this.#query, _pick: picks{'}'}
         return this
     {'}'}
@@ -33,7 +33,7 @@ pick(picks: {to_result_picks(cdef)}[]): {request}<Pick<T, typeof picks[number]>>
         this.#query = {'{'}...this.#query, _omit: omits{'}'}
         return this
     {'}'}
-    """.strip('\n'), _data_query_request_includes(cdef, request)],0)
+    """.strip() + "\n"
 
 def _data_query_request_includes(cdef: CDef, request: str) -> str:
     if interface_required_include(cdef):
@@ -42,7 +42,7 @@ def _data_query_request_includes(cdef: CDef, request: str) -> str:
         this.#query = {'{'}...this.#query, _includes: includes {'}'}
         return this
     {'}'}
-        """.strip('\n')
+        """.strip() + "\n"
         
     return ''
 
@@ -61,6 +61,7 @@ class {to_create_request(cdef)}<T extends Partial<{to_result(cdef)}>> extends Pr
     {'}'}
 
     {_data_query_request_common(cdef,to_create_request(cdef))}
+    {_data_query_request_includes(cdef, to_create_request(cdef))}
     async exec(): Promise<T> {'{'}
         return await RequestManager.share.post('/{name}', this.#input, this.#query)
     {'}'}
@@ -84,6 +85,7 @@ class {to_update_request(cdef)}<T extends Partial<{to_result(cdef)}>> extends Pr
     {'}'}
 
     {_data_query_request_common(cdef, to_update_request(cdef))}
+    {_data_query_request_includes(cdef, to_update_request(cdef))}
     async exec(): Promise<User> {'{'}
         return await RequestManager.share.patch(`/{name}/${'{'}this.#id{'}'}`, this.#input, this.#query)
     {'}'}
@@ -122,6 +124,7 @@ class {to_id_request(cdef)}<T extends Partial<{to_result(cdef)}>> extends Promis
     {'}'}
 
     {_data_query_request_common(cdef, to_id_request(cdef))}
+    { _data_query_request_includes(cdef, to_id_request(cdef))}
     async exec(): Promise<User> {'{'}
         return await RequestManager.share.get(`/{name}/${'{'}this.#id{'}'}`, this.#query)
     {'}'}
@@ -166,6 +169,7 @@ class {to_list_request(cdef)}<T extends Partial<{to_result(cdef)}>> extends Prom
     {'}'}
 
     {_data_query_request_common(cdef, to_list_request(cdef))}
+    {_data_query_request_includes(cdef, to_list_request(cdef))}
     exec(): Promise<User[]> {'{'}
         return RequestManager.share.get('/{name}',this.#query)
     {'}'}
@@ -182,7 +186,7 @@ class {cdef.name}Client {'{'}
 
     update(id: string, input: {to_update_input(cdef)}, query?: {to_single_query(cdef)}): {to_update_request(cdef)}<User> {'{'}
         return new {to_update_request(cdef)}(id, input, query)
-{'}'}
+    {'}'}
 
     delete(id: string): {to_delete_request(cdef)} {'{'}
         return new {to_delete_request(cdef)}(id)
