@@ -37,17 +37,22 @@ def to_update_request(cdef: CDef) -> str:
 def to_delete_request(cdef: CDef) -> str:
     return cdef.name + 'DeleteRequest'
 
+
 def to_delete_many_request(cdef: CDef) -> str:
     return cdef.name + 'DeleteManyRequest'
+
 
 def to_update_many_request(cdef: CDef) -> str:
     return cdef.name + 'UpdateManyRequest'
 
+
 def to_upsert_request(cdef: CDef) -> str:
     return cdef.name + 'UpsertRequrst'
 
+
 def to_create_many_request(cdef: CDef) -> str:
     return cdef.name + 'CreateManyRequest'
+
 
 def to_id_request(cdef: CDef) -> str:
     return cdef.name + 'IDRequest'
@@ -95,3 +100,7 @@ def to_sort_orders(cdef: CDef) -> str:
 
 def to_session_input(cdef: CDef) -> str:
     return cdef.name + 'SessionInput'
+
+
+def to_client(cdef: CDef) -> str:
+    return cdef.name + 'Client'

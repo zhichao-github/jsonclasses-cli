@@ -1,4 +1,5 @@
 from jsonclasses.cgraph import CGraph
+from jsonclasses_cli.package.ts.class_api import class_api
 
 from jsonclasses_cli.package.ts.data_requests_and_client import data_requests_and_clients
 from .request_manager import request_manager
@@ -32,6 +33,7 @@ def main_program_content(cgraph: CGraph) -> str:
         session_manager(session_classes) if use_session else '',
         request_manager('http://127.0.0.1:5000'),
         *map(lambda c: data_requests_and_clients(c), cgraph._map.values()),
+        class_api(cgraph)
     ], 3)
 
 

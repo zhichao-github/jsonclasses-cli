@@ -4,11 +4,12 @@ from jsonclasses_server.aconf import AConf
 from .shared_utils import interface_required_include
 from ...utils.join_lines import join_lines
 from ...utils.package_utils import (
-    class_needs_api, to_create_input, to_create_request, to_delete_request,
+    class_needs_api, to_client, to_create_input, to_create_request, to_delete_request,
     to_id_request, to_list_query, to_list_request, to_query_data, to_result, to_result_picks, to_seek_query, to_single_query,
-    to_update_input, to_update_request, to_sort_orders, to_include, to_upsert_request, to_create_many_request, 
+    to_update_input, to_update_request, to_sort_orders, to_include, to_upsert_request, to_create_many_request,
     to_update_many_request, to_delete_many_request
 )
+
 
 def data_requests_and_clients(cdef: CDef) -> str:
     if not class_needs_api(cdef):
@@ -24,8 +25,9 @@ def data_requests_and_clients(cdef: CDef) -> str:
         _data_update_many_request(cdef, aconf.name),
         _data_delete_many_request(cdef, aconf.name),
         _data_list_request(cdef, aconf.name),
-        _data_client(cdef,aconf)
+        _data_client(cdef)
     ], 2)
+
 
 def _data_query_request_common(cdef: CDef, request: str) -> str:
     return f"""
@@ -40,16 +42,18 @@ def _data_query_request_common(cdef: CDef, request: str) -> str:
     {'}'}
     """.strip() + "\n"
 
+
 def _data_query_request_includes(cdef: CDef, request: str) -> str:
     if interface_required_include(cdef):
-        return f""" 
+        return f"""
     include(includes: {to_include(cdef)}[]): {request}<T> {'{'}
         this.#query = {'{'}...this.#query, _includes: includes {'}'}
         return this
     {'}'}
         """.strip() + "\n"
-        
+
     return ''
+
 
 def _data_create_requet(cdef:CDef, name:str) -> str:
     return f"""
@@ -73,11 +77,12 @@ class {to_create_request(cdef)}<T extends Partial<{to_result(cdef)}>> extends Pr
 {'}'}
     """.strip() + "\n"
 
+
 def _data_upsert_request(cdef:CDef, name:str) -> str:
     return  f"""
 class {to_upsert_request(cdef)}<T extends Partial<{to_result(cdef)}>> extends Promise<T> {'{'}
     #input: {to_query_data(cdef)}
-    
+
     constructor(input: {to_query_data(cdef)}){'{'}
         super((resolve, reject) => {'{'}
             this.exec()
@@ -89,6 +94,7 @@ class {to_upsert_request(cdef)}<T extends Partial<{to_result(cdef)}>> extends Pr
     {'}'}
 {'}'}
     """
+
 
 def _data_create_many_request(cdef: CDef, name:str) -> str:
     return f"""
@@ -112,6 +118,7 @@ class {to_create_many_request(cdef)}<T extends Partial<{to_result(cdef)}>> exten
 {'}'}
     """
 
+
 def _data_update_many_request(cdef:CDef, name:str) -> str:
     return f"""
 class {to_update_many_request(cdef)}<T extends Partial<{to_result(cdef)}>> extends Promise<T> {'{'}
@@ -133,6 +140,7 @@ class {to_update_many_request(cdef)}<T extends Partial<{to_result(cdef)}>> exten
     {'}'}
 {'}'}
     """
+
 
 def _data_update_request(cdef:CDef, name:str) -> str:
     return f"""
@@ -158,6 +166,7 @@ class {to_update_request(cdef)}<T extends Partial<{to_result(cdef)}>> extends Pr
 {'}'}
 """.strip() + "\n"
 
+
 def _data_delete_request(cdef:CDef, name:str) -> str:
     return f"""
 class {to_delete_request(cdef)} extends Promise<void> {'{'}
@@ -175,6 +184,7 @@ class {to_delete_request(cdef)} extends Promise<void> {'{'}
 {'}'}
 """.strip() + "\n"
 
+
 def _data_delete_many_request(cdef:CDef, name:str) -> str:
     return f"""
 class {to_delete_many_request(cdef)} extends Promise<void> {'{'}
@@ -190,6 +200,7 @@ class {to_delete_many_request(cdef)} extends Promise<void> {'{'}
     {'}'}
 {'}'}
     """
+
 
 def _data_id_request(cdef:CDef, name:str) -> str:
     return f"""
@@ -212,6 +223,7 @@ class {to_id_request(cdef)}<T extends Partial<{to_result(cdef)}>> extends Promis
     {'}'}
 {'}'}
 """.strip() + "\n"
+
 
 def _data_list_request(cdef:CDef, name:str) -> str:
     return f"""
@@ -258,9 +270,10 @@ class {to_list_request(cdef)}<T extends Partial<{to_result(cdef)}>> extends Prom
 {'}'}
 """.strip() + "\n"
 
-def _data_client(cdef: CDef, aconf: AConf) -> str:
+
+def _data_client(cdef: CDef) -> str:
     return f"""
-class {cdef.name}Client {'{'}
+class {to_client(cdef)} {'{'}
 
     creat(input: {to_create_input(cdef)}, query?: {to_single_query(cdef)}): {to_create_request(cdef)}<{cdef.name}> {'{'}
         return new {to_create_request(cdef)}(input, query)
@@ -293,7 +306,7 @@ class {cdef.name}Client {'{'}
     updateMany(input: {to_query_data(cdef)}): Promise<{cdef.name}> {'{'}
         return new {to_update_many_request(cdef)}(input)
     {'}'}
-    
+
     deleteMany(query: {to_seek_query(cdef)}) {'{'}
         return new {to_delete_many_request(cdef)}(query)
     {'}'}
