@@ -1,22 +1,21 @@
-from jsonclasses_cli.utils.package_utils import to_sort_orders
 from ...utils.join_lines import join_lines
 
 
 InterfaceItem = tuple[str, str, bool]
 
 
-def interface(name: str, items: list[InterfaceItem]) -> str:
+def interface(name: str, items: list[InterfaceItem], export_ability: bool = False) -> str:
     return join_lines([
         join_lines([
-            interface_first_line(name),
+            interface_first_line(name, export_ability),
             interface_inst_items(items),
             '}'
         ], 1)
     ], 2)
 
 
-def interface_first_line(name: str) -> str:
-    return f"interface {name} {'{'}"
+def interface_first_line(name: str, export_ability: bool = False) -> str:
+    return f"{'export ' if export_ability else ''}interface {name} {'{'}"
 
 
 def interface_type_item(name: str, items: list[str]) -> str:

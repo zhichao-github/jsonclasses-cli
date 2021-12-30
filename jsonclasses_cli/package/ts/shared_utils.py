@@ -14,7 +14,7 @@ def list_query_items(cdef: CDef) -> list[tuple[str, str]]:
     for field in cdef.fields:
         if not is_field_queryable(field):
             continue
-        name = camelize(field.name, False)
+        name = camelize(field.name)
         type = jtype_to_ts_type(field.fdef, 'Q')
         if is_field_ref(field):
             continue
