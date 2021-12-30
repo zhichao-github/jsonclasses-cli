@@ -275,7 +275,7 @@ def _data_client(cdef: CDef) -> str:
     return f"""
 class {to_client(cdef)} {'{'}
 
-    creat(input: {to_create_input(cdef)}, query?: {to_single_query(cdef)}): {to_create_request(cdef)}<{cdef.name}> {'{'}
+    create(input: {to_create_input(cdef)}, query?: {to_single_query(cdef)}): {to_create_request(cdef)}<{cdef.name}> {'{'}
         return new {to_create_request(cdef)}(input, query)
     {'}'}
 
