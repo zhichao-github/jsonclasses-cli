@@ -28,7 +28,7 @@ def list_query_items(cdef: CDef) -> list[tuple[str, str]]:
     for field in cdef.fields:
         if not is_field_queryable(field):
             continue
-        name = camelize(field.name, False)
+        name = camelize(field.name)
         type = jtype_to_swift_type(field.fdef, 'Q')
         if is_field_ref(field):
             if not is_field_local_key(field):
@@ -49,7 +49,7 @@ def class_update_input_items(cdef: CDef) -> list[CodableClassItem]:
     for field in cdef.fields:
         if not field_can_update(field):
             continue
-        name = camelize(field.name, False)
+        name = camelize(field.name)
         stype = jtype_to_swift_type(field.fdef, 'U')
         local_key = is_field_local_key(field)
         item = codable_class_item('public', 'var', name, stype, True)
@@ -67,7 +67,7 @@ def class_create_input_items(cdef: CDef) -> list[CodableClassItem]:
         if not field_can_create(field):
             continue
         optional = not is_field_required_for_create(field)
-        name = camelize(field.name, False)
+        name = camelize(field.name)
         stype = jtype_to_swift_type(field.fdef, 'C')
         local_key = is_field_local_key(field)
         if local_key:

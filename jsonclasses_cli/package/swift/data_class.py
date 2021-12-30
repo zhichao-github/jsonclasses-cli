@@ -53,7 +53,7 @@ def _class_sort_orders(cdef: CDef) -> str:
             continue
         if not field_can_read(field):
             continue
-        fnames.append(camelize(field.name, False))
+        fnames.append(camelize(field.name))
     enum_items: list[str] = []
     for name in fnames:
         enum_items.append(codable_enum_item(name, 'String', name))
@@ -70,7 +70,7 @@ def _class_result_picks(cdef: CDef) -> str:
     for field in cdef.fields:
         if not field_can_read(field):
             continue
-        name = camelize(field.name, False)
+        name = camelize(field.name)
         items.append(codable_enum_item(name, 'String', name))
         if is_field_local_key(field):
             idname = field_ref_id_name(field)
@@ -316,7 +316,7 @@ def _class_result(cdef: CDef) -> str:
         if not field_can_read(field):
             continue
         optional = not is_field_required_for_read(field)
-        name = camelize(field.name, False)
+        name = camelize(field.name)
         stype = jtype_to_swift_type(field.fdef, 'R')
         local_key = is_field_local_key(field)
         item = codable_class_item('public', 'let', name, stype, optional)

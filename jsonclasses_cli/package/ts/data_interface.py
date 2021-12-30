@@ -37,7 +37,7 @@ def _interface_result(cdef: CDef) -> str:
     for field in cdef.fields:
         if not field_can_read(field):
             continue
-        name = camelize(field.name, False)
+        name = camelize(field.name)
         ftype = jtype_to_ts_type(field.fdef, 'R')
         optional = not is_field_required_for_read(field)
         item = interface_item(name, ftype, optional)
@@ -50,7 +50,7 @@ def _interface_result(cdef: CDef) -> str:
             item = interface_item(idname, idtype, optional)
             items.append(item)
     name = to_result(cdef)
-    return interface(name, items)
+    return interface(name, items, True)
 
 
 def _interface_create_input(cdef: CDef) -> str:
@@ -59,7 +59,7 @@ def _interface_create_input(cdef: CDef) -> str:
         if not field_can_create(field):
             continue
         optional = not is_field_required_for_create(field)
-        name = camelize(field.name, False)
+        name = camelize(field.name)
         ftype = jtype_to_ts_type(field.fdef, 'C')
         optional = not is_field_required_for_read(field)
         item = interface_item(name, ftype, optional)
@@ -72,7 +72,7 @@ def _interface_create_input(cdef: CDef) -> str:
             item = interface_item(idname, idtype, optional)
             items.append(item)
     name = to_create_input(cdef)
-    return interface(name, items)
+    return interface(name, items, True)
 
 
 def _interface_update_input(cdef: CDef) -> str:
@@ -81,7 +81,7 @@ def _interface_update_input(cdef: CDef) -> str:
         if not field_can_update(field):
             continue
         null_for_update = '' if is_field_required_null_for_update(field) else ' | null'
-        name = camelize(field.name, False)
+        name = camelize(field.name)
         ftype = jtype_to_ts_type(field.fdef, 'U') + null_for_update
         item = interface_item(name, ftype, True)
         items.append(item)
@@ -93,7 +93,7 @@ def _interface_update_input(cdef: CDef) -> str:
             item = interface_item(idname, idtype, True)
             items.append(item)
     name = to_update_input(cdef)
-    return interface(name, items)
+    return interface(name, items, True)
 
 
 def _interface_sort_order(cdef: CDef) -> str:
@@ -107,7 +107,7 @@ def _interface_sort_order(cdef: CDef) -> str:
             continue
         if not field_can_read(field):
             continue
-        name = camelize(field.name, False)
+        name = camelize(field.name)
         items.append(string(name))
         items.append(string('-' + name))
     name = to_sort_orders(cdef)
@@ -119,7 +119,7 @@ def _interface_result_pick(cdef: CDef) -> str:
     for field in cdef.fields:
         if not field_can_read(field):
             continue
-        name = string(camelize(field.name, False))
+        name = string(camelize(field.name))
         items.append(name)
         if is_field_local_key(field):
             idname = string(field_ref_id_name(field))
@@ -135,10 +135,10 @@ def _interface_include_keys(cdef: CDef) -> str:
         if is_field_ref(field):
             if field.fdef.ftype == FType.LIST:
                 ftype = jtype_to_ts_type(field.fdef, 'R').removesuffix('[]')
-                include_type = camelize(ftype + 'ListQuery')
+                include_type = ftype + 'ListQuery'
             else:
                 ftype = jtype_to_ts_type(field.fdef, 'R')
-                include_type = camelize(ftype + 'SingleQuery')
+                include_type = ftype + 'SingleQuery'
             name = to_include_name(cname, field.name)
             keys.append(_interface_include_key(name, field.name, include_type))
     return join_lines(keys, 2)
