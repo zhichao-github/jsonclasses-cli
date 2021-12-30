@@ -58,6 +58,7 @@ def _data_query_request_includes(cdef: CDef, request: str) -> str:
 def _data_create_requet(cdef:CDef, name:str) -> str:
     return f"""
 class {to_create_request(cdef)}<T extends Partial<{to_result(cdef)}>> extends Promise<T> {'{'}
+
     #input: {to_create_input(cdef)}
     #query?: {to_single_query(cdef)}
 
@@ -81,6 +82,7 @@ class {to_create_request(cdef)}<T extends Partial<{to_result(cdef)}>> extends Pr
 def _data_upsert_request(cdef:CDef, name:str) -> str:
     return  f"""
 class {to_upsert_request(cdef)}<T extends Partial<{to_result(cdef)}>> extends Promise<T> {'{'}
+
     #input: {to_query_data(cdef)}
 
     constructor(input: {to_query_data(cdef)}){'{'}
@@ -89,6 +91,7 @@ class {to_upsert_request(cdef)}<T extends Partial<{to_result(cdef)}>> extends Pr
         {'}'})
         this.#input = input
     {'}'}
+
     async exec(): Promise<T> {'{'}
         return await RequestManager.share.post('/{name}', {'{'} '_upsert': this.#input {'}'})
     {'}'}
@@ -99,6 +102,7 @@ class {to_upsert_request(cdef)}<T extends Partial<{to_result(cdef)}>> extends Pr
 def _data_create_many_request(cdef: CDef, name:str) -> str:
     return f"""
 class {to_create_many_request(cdef)}<T extends Partial<{to_result(cdef)}>> extends Promise<T> {'{'}
+
     #input: {to_create_input(cdef)}[]
     #query?: {to_single_query(cdef)}
 
@@ -122,6 +126,7 @@ class {to_create_many_request(cdef)}<T extends Partial<{to_result(cdef)}>> exten
 def _data_update_many_request(cdef:CDef, name:str) -> str:
     return f"""
 class {to_update_many_request(cdef)}<T extends Partial<{to_result(cdef)}>> extends Promise<T> {'{'}
+
     #input: {to_query_data(cdef)}
     #query?: {to_single_query(cdef)}
 
@@ -145,6 +150,7 @@ class {to_update_many_request(cdef)}<T extends Partial<{to_result(cdef)}>> exten
 def _data_update_request(cdef:CDef, name:str) -> str:
     return f"""
 class {to_update_request(cdef)}<T extends Partial<{to_result(cdef)}>> extends Promise<T> {'{'}
+
     #id: string
     #input: {to_update_input(cdef)}
     #query?: {to_single_query(cdef)}
@@ -170,6 +176,7 @@ class {to_update_request(cdef)}<T extends Partial<{to_result(cdef)}>> extends Pr
 def _data_delete_request(cdef:CDef, name:str) -> str:
     return f"""
 class {to_delete_request(cdef)} extends Promise<void> {'{'}
+
     #id: string
 
     constructor(id: string) {'{'}
@@ -188,13 +195,16 @@ class {to_delete_request(cdef)} extends Promise<void> {'{'}
 def _data_delete_many_request(cdef:CDef, name:str) -> str:
     return f"""
 class {to_delete_many_request(cdef)} extends Promise<void> {'{'}
+
     #query?: {to_seek_query(cdef)}
+
     constructor(query?: {to_seek_query(cdef)}) {'{'}
         super((resolve, reject) => {'{'}
             this.exec()
         {'}'})
         this.#query = query
     {'}'}
+
     async exec(): Promise<void> {'{'}
         return await RequestManager.share.delete('/{name}', this.#query)
     {'}'}
@@ -205,6 +215,7 @@ class {to_delete_many_request(cdef)} extends Promise<void> {'{'}
 def _data_id_request(cdef:CDef, name:str) -> str:
     return f"""
 class {to_id_request(cdef)}<T extends Partial<{to_result(cdef)}>> extends Promise<T> {'{'}
+
     #id: string
     #query?: {to_single_query(cdef)}
 
@@ -228,6 +239,7 @@ class {to_id_request(cdef)}<T extends Partial<{to_result(cdef)}>> extends Promis
 def _data_list_request(cdef:CDef, name:str) -> str:
     return f"""
 class {to_list_request(cdef)}<T extends Partial<{to_result(cdef)}>> extends Promise<T[]> {'{'}
+
     #query?: {to_list_query(cdef)}
 
     constructor(query?: {to_list_query(cdef)}) {'{'}
