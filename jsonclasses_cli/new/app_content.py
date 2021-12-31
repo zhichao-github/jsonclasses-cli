@@ -33,21 +33,16 @@ class Admin:
     """.strip() + "\n"
 
 
-def app_content(http_library: Literal['flask', 'fastapi'],
-                include_user: bool,
-                include_admin: bool) -> str:
+def app_content(include_user: bool, include_admin: bool) -> str:
 
     return f"""
 from __future__ import annotations
 from datetime import datetime
-from dotenv import load_dotenv
 from jsonclasses import jsonclass, types
 from jsonclasses_pymongo import pymongo
-from jsonclasses_server import api, {'authorized, ' if include_user or include_admin else ''}create_{http_library}_server
+from jsonclasses_server import api, {'authorized, ' if include_user or include_admin else ''}server
 
 
-# Load environment variables from .env file
-load_dotenv()
 
 
 # If you want to change the default database URL, uncomment and modify this:
@@ -76,7 +71,7 @@ load_dotenv()
 #     updated_at: datetime = types.readonly.datetime.tsupdated.required
 {user_content() if include_user else ''}{admin_content() if include_admin else ''}
 
-app = create_{http_library}_server()
+app = server()
 
 
 # You can still write custom routes if synthesized routes don't satisfy your
