@@ -3,7 +3,7 @@ from random import sample
 from jsonclasses_cli.utils.join_lines import join_lines
 
 
-def conf_content(include_user: bool, include_admin: bool) -> str:
+def conf_content() -> str:
     return join_lines([
         '{',
         _operator_conf,
