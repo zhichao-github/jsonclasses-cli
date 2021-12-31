@@ -1,6 +1,6 @@
 from jsonclasses.cgraph import CGraph
+from jsonclasses.uconf import uconf
 from jsonclasses_cli.package.ts.class_api import class_api
-
 from jsonclasses_cli.package.ts.data_requests_and_client import data_requests_and_clients
 from .request_manager import request_manager
 from .session_manager import session_manager
@@ -20,6 +20,7 @@ from ...utils.package_utils import session_input_cdefs
 def main_program_content(cgraph: CGraph) -> str:
     session_classes = session_items(cgraph)
     use_session = len(session_classes) > 0
+    request_url = uconf()['package.swift.url']
     return join_lines([
         _import_lines(),
         *map(lambda e: data_enum(e), cgraph._enum_map.values()),
@@ -31,7 +32,7 @@ def main_program_content(cgraph: CGraph) -> str:
         *map(lambda c: session_input(c), session_input_cdefs(cgraph)),
         session(session_classes),
         session_manager(session_classes) if use_session else '',
-        request_manager('http://127.0.0.1:5000'),
+        request_manager(request_url),
         *map(lambda c: data_requests_and_clients(c), cgraph._map.values()),
         class_api(cgraph),
         _export_api()

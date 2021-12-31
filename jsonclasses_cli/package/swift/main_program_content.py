@@ -1,4 +1,5 @@
 from jsonclasses.cgraph import CGraph
+from jsonclasses.uconf import uconf
 from .session_input import session_input
 from .import_lines import import_lines
 from .string_query import string_query
@@ -25,6 +26,7 @@ from ...utils.package_utils import session_input_cdefs
 def main_program_content(cgraph: CGraph) -> str:
     session_classes = session_items(cgraph)
     use_session = len(session_classes) > 0
+    request_url = uconf()['package.swift.url']
     return join_lines([
         import_lines(),
         string_query(),
@@ -44,7 +46,7 @@ def main_program_content(cgraph: CGraph) -> str:
         user_default(),
         session_manager() if use_session else '',
         sign_out(),
-        request_manager('http://127.0.0.1:5000', use_session),
+        request_manager(request_url, use_session),
         *map(lambda c: data_requests_and_clients(c), cgraph._map.values()),
         join_lines(map(lambda c: data_client_instances(c), cgraph._map.values()), 1),
     ], 2)

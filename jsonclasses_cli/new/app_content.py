@@ -45,12 +45,6 @@ from jsonclasses_server import api, {'authorized, ' if include_user or include_a
 
 
 
-# If you want to change the default database URL, uncomment and modify this:
-#
-# from jsonclasses_pymongo import Connection
-# Connection.default.set_url('mongodb://localhost:27017/yourdb')
-
-
 # You can create a model by using class and type hint syntax, with decorators
 # decorated.
 #
