@@ -63,9 +63,7 @@ class {to_create_request(cdef)}<T extends Partial<{to_result(cdef)}>> extends Pr
     #query?: {to_single_query(cdef)}
 
     constructor(input: {to_create_input(cdef)}, query?:{to_single_query(cdef)}){'{'}
-        super((resolve, reject) => {'{'}
-            this.exec()
-        {'}'})
+        super(() => {'{'}{'}'})
         this.#input = input
         this.#query = query
     {'}'}
@@ -156,9 +154,7 @@ class {to_update_request(cdef)}<T extends Partial<{to_result(cdef)}>> extends Pr
     #query?: {to_single_query(cdef)}
 
     constructor(id:string, input: {to_update_input(cdef)}, query?: {to_single_query(cdef)},) {'{'}
-        super((resolve, reject) => {'{'}
-            this.exec()
-        {'}'})
+        super(() => {'{'}{'}'})
         this.#id = id
         this.#input = input
         this.#query = query
@@ -180,9 +176,7 @@ class {to_delete_request(cdef)} extends Promise<void> {'{'}
     #id: string
 
     constructor(id: string) {'{'}
-        super((resolve, reject) => {'{'}
-            this.exec()
-        {'}'})
+        super(() => {'{'}{'}'})
         this.#id = id
     {'}'}
     async exec(): Promise<void> {'{'}
@@ -199,9 +193,7 @@ class {to_delete_many_request(cdef)} extends Promise<void> {'{'}
     #query?: {to_seek_query(cdef)}
 
     constructor(query?: {to_seek_query(cdef)}) {'{'}
-        super((resolve, reject) => {'{'}
-            this.exec()
-        {'}'})
+        super(() => {'{'}{'}'})
         this.#query = query
     {'}'}
 
@@ -220,9 +212,7 @@ class {to_id_request(cdef)}<T extends Partial<{to_result(cdef)}>> extends Promis
     #query?: {to_single_query(cdef)}
 
     constructor(id: string, query?: {to_single_query(cdef)}) {'{'}
-        super((resolve, reject) => {'{'}
-        this.exec()
-    {'}'})
+        super(() => {'{'}{'}'})
         this.#id = id,
         this.#query = query
     {'}'}
@@ -243,9 +233,7 @@ class {to_list_request(cdef)}<T extends Partial<{to_result(cdef)}>> extends Prom
     #query?: {to_list_query(cdef)}
 
     constructor(query?: {to_list_query(cdef)}) {'{'}
-        super((resolve,reject) => {'{'}
-            this.exec()
-        {'}'})
+        super(() => {'{'}{'}'})
         this.#query = query
     {'}'}
 

@@ -16,12 +16,12 @@ class RequestManager {"{"}
         {"}"} : undefined
     {"}"}
 
-    qs(val: any): string | undefined {"{"}
+    qs(val: any): string {"{"}
         if (!val) {"{"}
-            return undefined
+            return ''
         {"}"}
         if (Object.keys(val).length === 0) {"{"}
-            return undefined
+            return ''
         {"}"}
         return '?' + stringify(val)
     {"}"}
