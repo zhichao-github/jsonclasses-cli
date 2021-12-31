@@ -38,7 +38,7 @@ def new(dest: Path,
             venv = True
     write_file(dest / 'app.py', app_content(include_user=include_user, include_admin=include_admin))
     write_file(dest / 'requirements.txt', req_content(include_user=include_user, include_admin=include_admin))
-    write_file(dest / 'config.json', conf_content())
+    write_file(dest / 'config.json', conf_content(dest.name))
     write_file(dest / 'mypy.ini', mypy_content())
     write_file(dest / '.gitignore', gitignore_content())
     write_file(dest / 'README.md', readme_content(dest))
