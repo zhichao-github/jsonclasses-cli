@@ -31,21 +31,18 @@ def upgrade():
 @app.command(help='Create a new project.')
 @argument('name')
 @option('-i', '--interactive/--no-interactive', ' /-I', default=True, help='Whether run interactively.')
-@option('--http-library', type=Choice(['flask', 'fastapi'], case_sensitive=False), required=False, help='The HTTP Library to use.')
 @option('-u', '--include-user', is_flag=True, required=False, default=None, help='Whether include user.')
 @option('-a', '--include-admin', is_flag=True, required=False, default=None, help='Whether include admin.')
 @option('-g', '--git-init/--no-git-init', ' /-G', is_flag=True, required=False, default=None, help='Whether create a git repo.')
 @option('-m', '--venv/--no-venv', ' /-M', is_flag=True, required=False, default=None, help='Whether create a venv.')
 def new(name: str,
         interactive: bool | None,
-        http_library: Literal['flask', 'fastapi'] | None,
         include_user: bool | None,
         include_admin: bool | None,
         git_init: bool | None,
         venv: bool | None):
     execute_new(Path(getcwd()) / name,
                 interactive=interactive,
-                http_library=http_library,
                 include_user=include_user,
                 include_admin=include_admin,
                 git_init=git_init,
