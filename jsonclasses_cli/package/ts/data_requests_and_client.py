@@ -295,19 +295,19 @@ class {to_client(cdef)} {'{'}
         return new {to_list_request(cdef)}(query)
     {'}'}
 
-    upsert(input: {to_query_data(cdef)}): Promise<{cdef.name}> {'{'}
+    upsert(input: {to_query_data(cdef)}): {to_upsert_request(cdef)}<{cdef.name}> {'{'}
         return new {to_upsert_request(cdef)}(input)
     {'}'}
 
-    createMany(input: {to_create_input(cdef)}[]) {'{'}
+    createMany(input: {to_create_input(cdef)}[]) {to_create_many_request(cdef)}<{cdef.name}> {'{'}
         return new {to_create_many_request(cdef)}(input)
     {'}'}
 
-    updateMany(input: {to_query_data(cdef)}): Promise<{cdef.name}> {'{'}
+    updateMany(input: {to_query_data(cdef)}): {to_update_many_request(cdef)}<{cdef.name}> {'{'}
         return new {to_update_many_request(cdef)}(input)
     {'}'}
 
-    deleteMany(query: {to_seek_query(cdef)}) {'{'}
+    deleteMany(query?: {to_seek_query(cdef)}): {to_delete_many_request(cdef)} {'{'}
         return new {to_delete_many_request(cdef)}(query)
     {'}'}
 {'}'}

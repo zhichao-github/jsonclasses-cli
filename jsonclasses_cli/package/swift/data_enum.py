@@ -8,6 +8,6 @@ def data_enum(enum: type[Enum]) -> str:
 
 
 def _data_enum_item(option: Enum):
-    name = camelize(option.name.lower(), False)
+    name = camelize(option.name.lower())
     value = option.name
     return codable_enum_item(name, 'String', value)
