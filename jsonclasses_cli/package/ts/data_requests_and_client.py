@@ -84,9 +84,7 @@ class {to_upsert_request(cdef)}<T extends Partial<{to_result(cdef)}>> extends Pr
     #input: {to_query_data(cdef)}
 
     constructor(input: {to_query_data(cdef)}){'{'}
-        super((resolve, reject) => {'{'}
-            this.exec()
-        {'}'})
+        super(() => {'{'}{'}'})
         this.#input = input
     {'}'}
 
@@ -105,9 +103,7 @@ class {to_create_many_request(cdef)}<T extends Partial<{to_result(cdef)}>> exten
     #query?: {to_single_query(cdef)}
 
      constructor(input: {to_create_input(cdef)}[], query?:{to_single_query(cdef)}){'{'}
-        super((resolve, reject) => {'{'}
-            this.exec()
-        {'}'})
+        super(() => {'{'}{'}'})
         this.#input = input
         this.#query = query
     {'}'}
@@ -129,9 +125,7 @@ class {to_update_many_request(cdef)}<T extends Partial<{to_result(cdef)}>> exten
     #query?: {to_single_query(cdef)}
 
     constructor(input: {to_query_data(cdef)}, query?:{to_single_query(cdef)}) {'{'}
-        super((resolve, reject) => {'{'}
-            this.exec()
-        {'}'})
+        super(() => {'{'}{'}'})
         this.#input = input
         this.#query = query
     {'}'}
