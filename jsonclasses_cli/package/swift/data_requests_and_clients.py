@@ -16,7 +16,7 @@ def data_client_instances(cdef: CDef) -> str:
     if not class_needs_api(cdef):
         return ''
     aconf = cast(AConf, cdef.cls.aconf)
-    var_name = camelize(underscore(aconf.name), False)
+    var_name = camelize(underscore(aconf.name))
     return f'public var {var_name} = {to_client(cdef)}()'
 
 
