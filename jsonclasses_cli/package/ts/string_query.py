@@ -22,5 +22,33 @@ interface StringMatchQuery {
     _mode?: Mode
 }
 
-export type StringQuery = string | StringContainsQuery | StringPrefixQuery | StringSuffixQuery | StringMatchQuery
+interface StringEqQuery {
+    _eq: string
+}
+
+interface StringNeqQuery {
+    _neq: string
+}
+
+interface StringNullQuery {
+    _null: boolean
+}
+
+interface StringCompareQuery {
+    _gt?: string
+    _gte?: string
+    _lt?: string
+    _lte?: string
+}
+
+interface StringOrQuery {
+    _or: StringQuery[]
+}
+
+interface StringAndQuery {
+    _and: StringQuery[]
+}
+
+export type StringQuery = string | StringContainsQuery | StringPrefixQuery | StringSuffixQuery | StringMatchQuery |
+                          StringEqQuery | StringNeqQuery | StringNullQuery | StringCompareQuery | StringOrQuery | StringAndQuery
     """.strip() + "\n"

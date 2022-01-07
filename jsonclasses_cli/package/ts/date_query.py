@@ -1,11 +1,41 @@
 def date_query() -> str:
-    return ('interface DateValueQuery {\n'
-        '    _gt?: Date\n'
-        '    _gte?: Date\n'
-        '    _lt?: Date\n'
-        '    _lte?: Date\n'
-        '    _on?: Date\n'
-        '}\n'
-        '\n'
-        'export type DateQuery = Date | DateValueQuery\n'
-        )
+    return """
+interface DateValueQuery {
+    _gt?: Date
+    _gte?: Date
+    _lt?: Date
+    _lte?: Date
+    _on?: Date
+}
+
+interface DateEqQuery {
+    _eq: Date
+}
+
+interface DateNeqQuery {
+    _neq: Date
+}
+
+interface DateNullQuery {
+    _null: boolean
+}
+
+interface DateOrQuery {
+    _or: DateQuery[]
+}
+
+interface DateAndQuery {
+    _and: DateQuery[]
+}
+
+interface DateBeforeQuery {
+    _before: Date
+}
+
+interface DateAfterQuery {
+    _after: Date
+}
+
+export type DateQuery = Date | DateValueQuery | DateEqQuery | DateNeqQuery | DateNullQuery | DateOrQuery | DateAndQuery |
+                        DateBeforeQuery | DateAfterQuery
+    """.strip() + "\n"
