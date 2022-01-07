@@ -133,7 +133,7 @@ class {to_update_many_request(cdef)}<T extends Partial<{to_result(cdef)}>> exten
     {_data_query_request_common(cdef, to_update_many_request(cdef))}
     {_data_query_request_includes(cdef, to_update_many_request(cdef))}
     async exec(): Promise<{to_result(cdef)}> {'{'}
-        return await RequestManager.share.patch('/{name}', {'{'} 'update': this.#input {'}'})
+        return await RequestManager.share.patch('/{name}', {'{'} '_update': this.#input {'}'})
     {'}'}
 {'}'}
     """
