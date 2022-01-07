@@ -299,7 +299,7 @@ class {to_client(cdef)} {'{'}
         return new {to_upsert_request(cdef)}(input)
     {'}'}
 
-    createMany(input: {to_create_input(cdef)}[]) {to_create_many_request(cdef)}<{cdef.name}> {'{'}
+    createMany(input: {to_create_input(cdef)}[]): {to_create_many_request(cdef)}<{cdef.name}> {'{'}
         return new {to_create_many_request(cdef)}(input)
     {'}'}
 
