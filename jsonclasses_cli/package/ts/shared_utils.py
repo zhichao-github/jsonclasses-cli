@@ -1,5 +1,6 @@
 from inflection import camelize
 from jsonclasses.cdef import CDef
+from jsonclasses.fdef import FDef
 from jsonclasses.jfield import JField
 from jsonclasses.fdef import (
     FStore, FType, Nullability, ReadRule, Queryability, WriteRule
@@ -25,6 +26,7 @@ def list_query_items(cdef: CDef) -> list[tuple[str, str]]:
 
 def is_field_local_key(field: JField) -> bool:
     return field.fdef.fstore == FStore.LOCAL_KEY
+
 
 
 def is_field_required_for_create(field: JField) -> bool:
