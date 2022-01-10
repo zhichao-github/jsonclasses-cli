@@ -13,7 +13,7 @@ from ...utils.package_utils import (
     to_create_input, to_include, to_list_query, to_result, to_result_picks, to_seek_query, to_single_query,
     to_sort_orders, to_update_input, to_query_data)
 from ...utils.join_lines import join_lines
-from .jtype_to_ts_type import jtype_to_ts_type
+from .jtype_to_ts_type import is_field_link, jtype_to_ts_type
 
 
 def data_interface(cdef: CDef) -> str:
@@ -60,7 +60,7 @@ def _interface_create_input(cdef: CDef) -> str:
             continue
         optional = not is_field_required_for_create(field)
         name = camelize(field.name)
-        ftype = jtype_to_ts_type(field.fdef, 'C')
+        ftype = jtype_to_ts_type(field.fdef, 'C', is_field_link(field.fdef))
         optional = not is_field_required_for_read(field)
         item = interface_item(name, ftype, optional)
         items.append(item)
@@ -82,7 +82,7 @@ def _interface_update_input(cdef: CDef) -> str:
             continue
         null_for_update = '' if is_field_required_null_for_update(field) else ' | null'
         name = camelize(field.name)
-        ftype = jtype_to_ts_type(field.fdef, 'U') + null_for_update
+        ftype = jtype_to_ts_type(field.fdef, 'U', is_field_link(field.fdef)) + null_for_update
         item = interface_item(name, ftype, True)
         items.append(item)
         local_key = is_field_local_key(field)

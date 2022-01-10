@@ -2,6 +2,7 @@ from jsonclasses.cgraph import CGraph
 from jsonclasses.uconf import uconf
 from jsonclasses_cli.package.ts.class_api import class_api
 from jsonclasses_cli.package.ts.data_requests_and_client import data_requests_and_clients
+from jsonclasses_cli.package.ts.links_interface import links_interface
 from .request_manager import request_manager
 from .session_manager import session_manager
 from .session_input import session_input
@@ -28,6 +29,7 @@ def main_program_content(cgraph: CGraph) -> str:
         number_query(),
         boolean_query(),
         date_query(),
+        links_interface(),
         *map(lambda c: data_interface(c), cgraph._map.values()),
         *map(lambda c: session_input(c), session_input_cdefs(cgraph)),
         session(session_classes),
