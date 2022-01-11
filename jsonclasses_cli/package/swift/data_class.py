@@ -15,7 +15,7 @@ from .shared_utils import (
 )
 from ...utils.join_lines import join_lines
 from ...utils.package_utils import (
-    to_create_input, to_seek_query, to_update_input, to_single_query, to_list_query, to_result,
+    to_create_input, to_include_key, to_seek_query, to_update_input, to_single_query, to_list_query, to_result,
     to_result_picks, to_include, to_sort_orders
 )
 
@@ -89,7 +89,7 @@ def _class_include_key_enums(cdef: CDef) -> str:
 
 
 def _class_include_key_enum(cname: str, fname: str) -> str:
-    return codable_enum(cname + camelize(fname) + 'Include', 'Int', [
+    return codable_enum(to_include_key(cname, fname), 'Int', [
         codable_enum_item(fname, 'Int', '1')
     ])
 
@@ -202,9 +202,9 @@ def _single_query_includes(cdef: CDef, single: bool = True) -> str:
     for field in cdef.fields:
         if is_field_ref(field):
             if field.fdef.ftype == FType.LIST:
-                items.append((field.name, cdef.name + camelize(field.name) + 'Include', to_list_query(field.foreign_cdef)))
+                items.append((field.name, to_include_key(cdef.name, field.name), to_list_query(field.foreign_cdef)))
             else:
-                items.append((field.name, cdef.name + camelize(field.name) + 'Include', to_single_query(field.foreign_cdef)))
+                items.append((field.name, to_include_key(cdef.name, field.name), to_single_query(field.foreign_cdef)))
     return join_lines(map(lambda i: _single_query_include(cdef, i[0], i[1], i[2], single), items), 2)
 
 

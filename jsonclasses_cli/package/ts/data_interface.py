@@ -8,9 +8,9 @@ from .shared_utils import (
     interface_required_include, field_ref_id_name, is_field_local_key, is_field_primary,
     is_field_ref, is_field_required_for_read, field_can_read, field_can_create, is_field_required_for_create,
     field_can_update, is_list_field, is_field_required_null_for_update, list_query_items, string,
-    is_field_queryable, to_include_name)
+    is_field_queryable)
 from ...utils.package_utils import (
-    to_create_input, to_include, to_list_query, to_result, to_result_picks, to_seek_query, to_single_query,
+    to_create_input, to_include, to_include_key, to_list_query, to_result, to_result_picks, to_seek_query, to_single_query,
     to_sort_orders, to_update_input, to_query_data)
 from ...utils.join_lines import join_lines
 from .jtype_to_ts_type import is_field_link, jtype_to_ts_type
@@ -139,7 +139,7 @@ def _interface_include_keys(cdef: CDef) -> str:
             else:
                 ftype = jtype_to_ts_type(field.fdef, 'R')
                 include_type = ftype + 'SingleQuery'
-            name = to_include_name(cname, field.name)
+            name = to_include_key(cname, field.name)
             keys.append(_interface_include_key(name, field.name, include_type))
     return join_lines(keys, 2)
 
@@ -158,7 +158,7 @@ def _interface_include_type(cdef: CDef) -> str:
     include_types: list[str] = []
     for field in cdef.fields:
         if is_field_ref(field):
-            name = to_include_name(cname, field.name)
+            name = to_include_key(cname, field.name)
             include_types.append(name)
     return interface_type_item(include, include_types) if len(include_types) else ""
 
