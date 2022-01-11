@@ -102,5 +102,13 @@ def to_session_input(cdef: CDef) -> str:
     return cdef.name + 'SessionInput'
 
 
+def to_session(cdef: CDef) -> str:
+    return cdef.name + 'Session'
+
+
 def to_client(cdef: CDef) -> str:
     return cdef.name + 'Client'
+
+
+def to_sign_in_request(cdef: CDef) -> str:
+    return cdef.name + 'SignInRequest'

@@ -1,13 +1,14 @@
 from typing import cast
 from jsonclasses.cdef import CDef
+from jsonclasses_cli.package.ts.sign_in_request import sign_in_request
 from jsonclasses_server.aconf import AConf
 from .shared_utils import interface_required_include
 from ...utils.join_lines import join_lines
 from ...utils.package_utils import (
-    class_needs_api, to_client, to_create_input, to_create_request, to_delete_request,
-    to_id_request, to_list_query, to_list_request, to_query_data, to_result, to_result_picks, to_seek_query, to_single_query,
-    to_update_input, to_update_request, to_sort_orders, to_include, to_upsert_request, to_create_many_request,
-    to_update_many_request, to_delete_many_request
+    class_needs_api, class_needs_session, to_client, to_create_input, to_create_request, to_delete_request, to_id_request,
+    to_list_query, to_list_request, to_query_data, to_result, to_result_picks, to_seek_query, to_session, to_session_input,
+    to_sign_in_request, to_single_query, to_update_input, to_update_request, to_sort_orders, to_include, to_upsert_request,
+    to_create_many_request, to_update_many_request, to_delete_many_request
 )
 
 
@@ -25,6 +26,7 @@ def data_requests_and_clients(cdef: CDef) -> str:
         _data_update_many_request(cdef, aconf.name),
         _data_delete_many_request(cdef, aconf.name),
         _data_list_request(cdef, aconf.name),
+        sign_in_request(cdef),
         _data_client(cdef)
     ], 2)
 
@@ -304,5 +306,16 @@ class {to_client(cdef)} {'{'}
     deleteMany(query?: {to_seek_query(cdef)}): {to_delete_many_request(cdef)} {'{'}
         return new {to_delete_many_request(cdef)}(query)
     {'}'}
+    {_sign_in(cdef)}
 {'}'}
 """.strip() + "\n"
+
+def _sign_in(cdef: CDef) -> str:
+    if not class_needs_session(cdef):
+        return ''
+    return join_lines([
+        '\n',
+        f'    signIn(input: {to_session_input(cdef)}, query?: {to_single_query(cdef)}): {to_sign_in_request(cdef)}<{to_session(cdef)}>{"{"}',
+        f'       return new {to_sign_in_request(cdef)}(input, query)',
+        '    }'
+    ])
