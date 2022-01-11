@@ -18,7 +18,10 @@ def list_query_items(cdef: CDef) -> list[tuple[str, str]]:
         name = camelize(field.name)
         type = jtype_to_ts_type(field.fdef, 'Q')
         if is_field_ref(field):
-            continue
+            if not is_field_local_key(field):
+                continue
+            idname = field_ref_id_name(field)
+            items.append((idname, 'IDQuery'))
         else:
             items.append((name, type))
     return items
@@ -120,7 +123,7 @@ def is_list_field(field: JField) -> bool:
 
 
 def to_include_name(cname: str, name: str) -> str:
-    return cname + camelize(name) + 'Include'
+    return cname + name.capitalize() + 'Include'
 
 
 def string(val: str) -> str:

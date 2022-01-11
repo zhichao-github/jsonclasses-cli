@@ -15,7 +15,7 @@ from .shared_utils import (
 )
 from ...utils.join_lines import join_lines
 from ...utils.package_utils import (
-    to_create_input, to_update_input, to_single_query, to_list_query, to_result,
+    to_create_input, to_seek_query, to_update_input, to_single_query, to_list_query, to_result,
     to_result_picks, to_include, to_sort_orders
 )
 
@@ -29,6 +29,7 @@ def data_class(cdef: CDef) -> str:
         _class_include_key_enums(cdef),
         _class_include_enum(cdef),
         _class_single_query(cdef),
+        _class_seek_query(cdef),
         _class_list_query(cdef),
         _class_result(cdef),
     ], 2)
@@ -259,26 +260,38 @@ def _class_single_query(cdef: CDef) -> str:
     ], 2)])
 
 
-def _list_query_find(cdef: CDef) -> str:
+def _list_query_find(cdef: CDef, query_name: str) -> str:
     items = list_query_items(cdef)
     last = len(items) - 1
     arglist = lambda i: f"        {i[1][0]}: {i[1][1]}? = nil{'' if i[0] == last else ','}"
     return join_lines([
         '    public static func `where`(',
         *map(arglist, enumerate(items)),
-        f'    ) -> {to_list_query(cdef)} {"{"}',
-        f'        let instance = {to_list_query(cdef)}()',
+        f'    ) -> {query_name} {"{"}',
+        f'        let instance = {query_name}()',
         *map(lambda i: f"        instance.{i[1][0]} = {i[1][0]}", enumerate(items)),
         '        return instance',
         '    }',
         '\n',
         '    public func `where`(',
         *map(arglist, enumerate(items)),
-        f'    ) -> {to_list_query(cdef)} {"{"}',
+        f'    ) -> {query_name} {"{"}',
         *map(lambda i: f"        if {i[0]} != nil {'{'} self.{i[0]} = {i[0]} {'}'}", items),
         '        return self',
         '    }'
     ], 1)
+
+
+def _class_seek_query(cdef: CDef) -> str:
+    items = list(map(lambda i: codable_struct_item('public', 'var', i[0], i[1], True, 'nil'), list_query_items(cdef)))
+    operators = [
+        '\n',
+        join_lines([
+            _list_query_find(cdef, to_seek_query(cdef))
+        ], 2)
+    ]
+    items.extend(operators)
+    return codable_struct_class(to_seek_query(cdef), items)
 
 
 def _class_list_query(cdef: CDef) -> str:
@@ -299,7 +312,7 @@ def _class_list_query(cdef: CDef) -> str:
         order, limit, skip, page_no, page_size, *_single_query_items(cdef),
         '\n',
         join_lines([
-            _list_query_find(cdef),
+            _list_query_find(cdef, to_list_query(cdef)),
             _list_query_orders(sort_order, cdef, False),
             _list_query_limit_skip_pn_ps(cdef),
             _single_query_picks_omits(cdef, False),
