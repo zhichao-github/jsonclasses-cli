@@ -94,6 +94,10 @@ def to_include(cdef: CDef) -> str:
     return cdef.name + 'Include'
 
 
+def to_include_key(cname: str, name: str) -> str:
+    return cname + name.capitalize() + 'Include'
+
+
 def to_sort_orders(cdef: CDef) -> str:
     return cdef.name + 'SortOrder'
 

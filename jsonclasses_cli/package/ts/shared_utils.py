@@ -122,9 +122,5 @@ def is_list_field(field: JField) -> bool:
     return field.fdef.ftype == FType.LIST
 
 
-def to_include_name(cname: str, name: str) -> str:
-    return cname + name.capitalize() + 'Include'
-
-
 def string(val: str) -> str:
     return "'" +val +"'"
