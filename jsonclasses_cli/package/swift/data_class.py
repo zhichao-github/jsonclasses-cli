@@ -7,16 +7,15 @@ from .codable_enum import codable_associated_item, codable_enum, codable_enum_it
 from .codable_class import codable_class, codable_class_item
 from .jtype_to_swift_type import jtype_to_swift_type
 from .shared_utils import (
-    class_create_input_items, class_update_input_items, is_field_nonnull,
-    is_field_primary, is_field_local_key, field_can_read, field_can_create,
-    field_can_update, field_has_default, field_ref_id_name, is_field_queryable,
-    is_field_ref, is_field_required_for_create, is_field_required_for_read,
+    class_create_input_items, class_update_input_items, is_field_primary,
+    is_field_local_key, field_can_read, field_ref_id_name, is_field_queryable,
+    is_field_ref, is_field_required_for_read,
     array, list_query_items, class_include_items
 )
 from ...utils.join_lines import join_lines
 from ...utils.package_utils import (
-    to_create_input, to_include_key, to_seek_query, to_update_input, to_single_query, to_list_query, to_result,
-    to_result_picks, to_include, to_sort_orders
+    to_create_input, to_include_key, to_query_data, to_seek_query, to_update_input,
+    to_single_query, to_list_query, to_result, to_result_picks, to_include, to_sort_orders
 )
 
 
@@ -30,6 +29,7 @@ def data_class(cdef: CDef) -> str:
         _class_include_enum(cdef),
         _class_single_query(cdef),
         _class_seek_query(cdef),
+        _class_query_data(cdef),
         _class_list_query(cdef),
         _class_result(cdef),
     ], 2)
@@ -292,6 +292,14 @@ def _class_seek_query(cdef: CDef) -> str:
     ]
     items.extend(operators)
     return codable_struct_class(to_seek_query(cdef), items)
+
+
+def _class_query_data(cdef: CDef) -> str:
+    items = [
+        codable_class_item('fileprivate', 'var', '_query', to_seek_query(cdef), False),
+        codable_class_item('fileprivate', 'var', '_data', to_update_input(cdef), False),
+    ]
+    return codable_class(to_query_data(cdef), items)
 
 
 def _class_list_query(cdef: CDef) -> str:

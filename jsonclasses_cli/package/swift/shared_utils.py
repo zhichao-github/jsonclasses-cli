@@ -80,6 +80,7 @@ def class_create_input_items(cdef: CDef) -> list[CodableClassItem]:
             items.append(item)
     return items
 
+
 def is_field_required_for_create(field: JField) -> bool:
     if field_has_default(field):
         return False
