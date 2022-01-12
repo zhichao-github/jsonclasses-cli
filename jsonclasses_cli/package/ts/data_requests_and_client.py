@@ -27,7 +27,7 @@ def data_requests_and_clients(cdef: CDef) -> str:
         _data_delete_many_request(cdef, aconf.name),
         _data_list_request(cdef, aconf.name),
         sign_in_request(cdef),
-        _data_client(cdef)
+        _data_client(cdef, aconf)
     ], 2)
 
 
@@ -267,48 +267,84 @@ class {to_list_request(cdef)}<T extends Partial<{to_result(cdef)}>> extends Prom
 """.strip() + "\n"
 
 
-def _data_client(cdef: CDef) -> str:
-    return f"""
-class {to_client(cdef)} {'{'}
+def _data_client(cdef: CDef, aconf: AConf) -> str:
+    return join_lines([
+        f'class {to_client(cdef)} {"{"}',
+        _data_client_create(cdef, aconf),
+        _data_client_id(cdef, aconf),
+        _data_client_update(cdef, aconf),
+        _data_client_find(cdef, aconf),
+        _data_client_delete(cdef, aconf),
+        _sign_in(cdef),
+        '}'
+    ], 2)
 
-    create(input: {to_create_input(cdef)}, query?: {to_single_query(cdef)}): {to_create_request(cdef)}<{cdef.name}> {'{'}
-        return new {to_create_request(cdef)}(input, query)
-    {'}'}
 
-    update(id: string, input: {to_update_input(cdef)}, query?: {to_single_query(cdef)}): {to_update_request(cdef)}<{cdef.name}> {'{'}
-        return new {to_update_request(cdef)}(id, input, query)
-    {'}'}
+def _data_client_create(cdef: CDef, aconf: AConf) -> str:
+    if 'C' not in aconf.actions:
+        return ''
+    return join_lines([
+        f'    create(input: {to_create_input(cdef)}, query?: {to_single_query(cdef)}): {to_create_request(cdef)}<{cdef.name}> {"{"}',
+        f'        return new {to_create_request(cdef)}(input, query)',
+        '    }',
+        '\n',
+        f'    createMany(input: {to_create_input(cdef)}[]): {to_create_many_request(cdef)}<{cdef.name}> {"{"}',
+        f'        return new {to_create_many_request(cdef)}(input)',
+        '    }',
+    ])
 
-    delete(id: string): {to_delete_request(cdef)} {'{'}
-        return new {to_delete_request(cdef)}(id)
-    {'}'}
 
-    id(id: string, query?: {to_single_query(cdef)}) {'{'}
-        return new {to_id_request(cdef)}(id, query)
-    {'}'}
+def _data_client_id(cdef: CDef, aconf: AConf) -> str:
+    if 'R' not in aconf.actions:
+        return ''
+    return join_lines([
+        f'    id(id: string, query?: {to_single_query(cdef)}) {"{"}',
+        f'        return new {to_id_request(cdef)}(id, query)',
+        '    }',
+    ])
 
-    find(query?: {to_list_query(cdef)}): {to_list_request(cdef)}<{cdef.name}> {'{'}
-        return new {to_list_request(cdef)}(query)
-    {'}'}
 
-    upsert(input: {to_query_data(cdef)}): {to_upsert_request(cdef)}<{cdef.name}> {'{'}
-        return new {to_upsert_request(cdef)}(input)
-    {'}'}
+def _data_client_update(cdef: CDef, aconf: AConf) -> str:
+    if 'U' not in aconf.actions:
+        return ''
+    return join_lines([
+        f'    update(id: string, input: {to_update_input(cdef)}, query?: {to_single_query(cdef)}): {to_update_request(cdef)}<{cdef.name}> {"{"}',
+        f'        return new {to_update_request(cdef)}(id, input, query)',
+        '    }',
+        '\n',
+        f'    upsert(input: {to_query_data(cdef)}): {to_upsert_request(cdef)}<{cdef.name}> {"{"}',
+        f'        return new {to_upsert_request(cdef)}(input)',
+        '    }',
+        '\n',
+        f'    updateMany(input: {to_query_data(cdef)}): {to_update_many_request(cdef)}<{cdef.name}> {"{"}',
+        f'        return new {to_update_many_request(cdef)}(input)',
+        '    }'
+    ])
 
-    createMany(input: {to_create_input(cdef)}[]): {to_create_many_request(cdef)}<{cdef.name}> {'{'}
-        return new {to_create_many_request(cdef)}(input)
-    {'}'}
 
-    updateMany(input: {to_query_data(cdef)}): {to_update_many_request(cdef)}<{cdef.name}> {'{'}
-        return new {to_update_many_request(cdef)}(input)
-    {'}'}
+def _data_client_find(cdef: CDef, aconf: AConf) -> str:
+    if 'L' not in aconf.actions:
+        return ''
+    return join_lines([
+        f'    find(query?: {to_list_query(cdef)}): {to_list_request(cdef)}<{cdef.name}> {"{"}',
+        f'        return new {to_list_request(cdef)}(query)',
+        '    }',
+    ])
 
-    deleteMany(query?: {to_seek_query(cdef)}): {to_delete_many_request(cdef)} {'{'}
-        return new {to_delete_many_request(cdef)}(query)
-    {'}'}
-    {_sign_in(cdef)}
-{'}'}
-""".strip() + "\n"
+
+def _data_client_delete(cdef: CDef, aconf: AConf) -> str:
+    if 'D' not in aconf.actions:
+        return ''
+    return join_lines([
+        f'    delete(id: string): {to_delete_request(cdef)} {"{"}',
+        f'        return new {to_delete_request(cdef)}(id)',
+        '    }',
+        '\n',
+        f'    deleteMany(query?: {to_seek_query(cdef)}): {to_delete_many_request(cdef)} {"{"}',
+        f'        return new {to_delete_many_request(cdef)}(query)',
+        '    }',
+    ])
+
 
 def _sign_in(cdef: CDef) -> str:
     if not class_needs_session(cdef):
