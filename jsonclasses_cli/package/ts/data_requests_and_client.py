@@ -1,6 +1,6 @@
 from typing import cast
 from jsonclasses.cdef import CDef
-from jsonclasses_cli.package.ts.sign_in_request import sign_in_request
+from .sign_in_request import sign_in_request
 from jsonclasses_server.aconf import AConf
 from .shared_utils import interface_required_include
 from ...utils.join_lines import join_lines

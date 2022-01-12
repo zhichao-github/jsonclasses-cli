@@ -9,8 +9,8 @@ from .jtype_to_swift_type import jtype_to_swift_type
 from .shared_utils import (
     class_create_input_items, class_update_input_items, is_field_primary,
     is_field_local_key, field_can_read, field_ref_id_name, is_field_queryable,
-    is_field_ref, is_field_required_for_read,
-    array, list_query_items, class_include_items
+    is_field_ref, is_field_required_for_read, array, list_query_items,
+    class_include_items, to_many_request_type
 )
 from ...utils.join_lines import join_lines
 from ...utils.package_utils import (
@@ -27,6 +27,7 @@ def data_class(cdef: CDef) -> str:
         _class_result_picks(cdef),
         _class_include_key_enums(cdef),
         _class_include_enum(cdef),
+        _class_many_request_enum(cdef),
         _class_single_query(cdef),
         _class_seek_query(cdef),
         _class_query_data(cdef),
@@ -348,3 +349,30 @@ def _class_result(cdef: CDef) -> str:
             items.append(item)
     name = to_result(cdef)
     return codable_class(name, items, True)
+
+
+def _class_many_request_enum(cdef: CDef) -> str:
+    return join_lines([
+        f'public enum {to_many_request_type(cdef)}: Codable {"{"}',
+        '    case update',
+        '    case create',
+        '    case upsert',
+        '\n',
+        f'    func getContent(input: {to_query_data(cdef)}) -> Dictionary<String, String> {"{"}',
+        '        if self  == .update {',
+        '            return ["_update": input]',
+        '        }',
+        '        else if self == .upsert {',
+        '            return ["_upsert": input]',
+        '        }',
+        '        return [String: String]()',
+        '    }',
+        '\n',
+        f'    func getContent(input: [{to_create_input(cdef)}]) -> Dictionary<String, String> {"{"}',
+        '        if self  == .create {',
+        '            return ["_create": input]',
+        '        }',
+        '        return [String: String]()',
+        '    }',
+        '}',
+    ])
