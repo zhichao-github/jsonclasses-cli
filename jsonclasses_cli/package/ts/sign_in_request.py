@@ -23,8 +23,10 @@ class {to_sign_in_request(cdef)}<T extends Partial<{to_session(cdef)}>> extends 
 
     {_data_query_request_common(cdef, to_sign_in_request(cdef))}
     {_data_query_request_includes(cdef, to_sign_in_request(cdef))}
-    async exec(): Promise<T> {'{'}
-        return await RequestManager.share.post('/{name}/session', this.#input, this.#query)
+    async exec(): Promise<{to_session(cdef)}> {'{'}
+        const session = await RequestManager.share.post('/{name}/session', this.#input, this.#query) as {to_session(cdef)}
+        SessionManager.share.setSession(session)
+        return session
     {'}'}
 {'}'}
     """.strip() + "\n"
