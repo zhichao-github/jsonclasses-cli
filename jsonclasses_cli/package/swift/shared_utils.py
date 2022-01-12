@@ -156,5 +156,8 @@ def field_can_read(field: JField) -> bool:
     return True
 
 
+def to_many_request_type(cdef: CDef) -> str:
+    return cdef.name + 'ManyRequestType'
+
 def array(val: str) -> str:
     return '[' + val + ']'

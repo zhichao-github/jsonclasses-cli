@@ -3,12 +3,12 @@ from inflection import camelize, underscore
 from jsonclasses.cdef import CDef
 from jsonclasses_server.aconf import AConf
 from .codable_class import CodableClassItem
-from .shared_utils import class_create_input_items, class_include_items, class_update_input_items, list_query_items
+from .shared_utils import class_create_input_items, class_include_items, class_update_input_items, list_query_items, to_many_request_type
 from ...utils.join_lines import join_lines
 from ...utils.package_utils import (
-    class_needs_api, class_needs_session, to_client, to_create_input, to_create_request, to_delete_request,
-    to_id_request, to_list_query, to_list_request, to_list_result, to_result_picks, to_single_query,
-    to_update_input, to_result, to_update_request, to_sort_orders, to_include
+    class_needs_api, to_client, to_create_input, to_create_many_request, to_create_request, to_delete_many_request, to_delete_request,
+    to_id_request, to_list_query, to_list_request, to_list_result, to_query_data, to_result_picks, to_seek_query, to_single_query,
+    to_update_input, to_result, to_update_many_request, to_update_request, to_sort_orders, to_upsert_request
 )
 
 
@@ -29,6 +29,10 @@ def data_requests_and_clients(cdef: CDef) -> str:
         _data_update_request(cdef, aconf.name) if 'U' in aconf.actions else '',
         _data_delete_request(cdef, aconf.name) if 'D' in aconf.actions else '',
         _data_id_request(cdef, aconf.name) if 'R' in aconf.actions else '',
+        _data_upsert_request(cdef, aconf.name),
+        _data_create_many_request(cdef, aconf.name),
+        _data_update_many_request(cdef, aconf.name),
+        _data_delete_many_request(cdef, aconf.name),
         _data_find_request(cdef, aconf.name) if 'L' in aconf.actions else '',
         _data_client(cdef, aconf)
     ], 2)
@@ -73,10 +77,10 @@ def _data_find_request_method(cdef: CDef) -> str:
     """.strip('\n')
 
 
-def _data_query_request_common(cdef: CDef, single: bool = True) -> str:
+def _data_query_request_common(cdef: CDef, single: bool = True, is_create_many: bool = False) -> str:
     return join_lines([f"""
     public func pick(_ picks: [{to_result_picks(cdef)}]) -> Self {'{'}
-        if query == nil {'{'} query = {to_single_query(cdef) if single else to_list_query(cdef)}() {'}'}
+        if query == nil {'{'} query = {to_single_query(cdef) if single or is_create_many else to_list_query(cdef)}() {'}'}
         query = query!.pick(picks)
         return self
     {'}'}
@@ -86,7 +90,7 @@ def _data_query_request_common(cdef: CDef, single: bool = True) -> str:
     {'}'}
 
     public func omit(_ omits: [{to_result_picks(cdef)}]) -> Self {'{'}
-        if query == nil {'{'} query = {to_single_query(cdef) if single else to_list_query(cdef)}() {'}'}
+        if query == nil {'{'} query = {to_single_query(cdef) if single or is_create_many else to_list_query(cdef)}() {'}'}
         query = query!.omit(omits)
         return self
     {'}'}
@@ -205,6 +209,84 @@ def _data_id_request(cdef: CDef, name: str) -> str:
     ], 1)
 
 
+def _data_upsert_request(cdef: CDef, name: str) -> str:
+    return join_lines([
+        f"public class {to_upsert_request(cdef)} {'{'}",
+        f"    internal var input: {to_query_data(cdef)}",
+        '\n',
+        f"    internal init(input: {to_query_data(cdef)}) {'{'}",
+        '        self.input = input',
+        '    }',
+        '\n',
+        f"    internal func exec() async throws -> {to_result(cdef)} {'{'}",
+        f"        return try await RequestManager.shared.post(",
+        f'            url: "/{name}"',
+        f'            input: {to_many_request_type(cdef)}.upsert.getContent(input: self.input)',
+        f"        )",
+        "    }",
+        '}'
+    ], 1)
+
+
+def _data_create_many_request(cdef: CDef, name: str) -> str:
+    return join_lines([
+        f"public class {to_create_many_request(cdef)} {'{'}",
+        f"    internal var input: [{to_create_input(cdef)}]",
+        f"    internal var query: {to_single_query(cdef)}?",
+        '\n',
+        f"    internal init(input: [{to_create_input(cdef)}], query: {to_single_query(cdef)}? = nil) {'{'}",
+        '        self.input = input',
+        '        self.query = query'
+        '    }',
+        '\n',
+        f"    internal func exec() async throws -> {to_result(cdef)} {'{'}",
+        f"        return try await RequestManager.shared.post(",
+        f'            url: "/{name}", input: {to_many_request_type(cdef)}.create.getContent(input: self.input), query: query',
+        f"        )",
+        "    }",
+        '\n',
+        _data_query_request_common(cdef, False, True),
+        '}'
+    ], 1)
+
+
+def _data_update_many_request(cdef: CDef, name: str) -> str:
+    return join_lines([
+        f"public class {to_update_many_request(cdef)} {'{'}",
+        f"    internal var input: {to_query_data(cdef)}",
+        '\n',
+        f"    internal init(input: {to_query_data(cdef)}) {'{'}",
+        '        self.input = input',
+        '    }',
+        '\n',
+        f"    internal func exec() async throws -> [{to_result(cdef)}] {'{'}",
+        f"        return try await RequestManager.shared.patch(",
+        f'            url: "/{name}", input: {to_many_request_type(cdef)}.update.getContent(input: self.input)',
+        f"        )",
+        "    }",
+        '}'
+    ], 1)
+
+
+def _data_delete_many_request(cdef: CDef, name: str) -> str:
+    return join_lines([
+        f"public class {to_delete_many_request(cdef)} {'{'}",
+        f"    internal var query: {to_seek_query(cdef)}?",
+        "\n",
+        f"    internal init(query: {to_seek_query(cdef)}? = nil) {'{'}",
+        '        self.query = query',
+        '    }',
+        "\n",
+        "    internal func exec() async throws {",
+        "        return try await RequestManager.shared.delete(",
+        f'            url: "/{name}",',
+        '            query: self.query',
+        "        )",
+        "    }",
+        "}"
+    ], 1)
+
+
 def _data_find_request(cdef: CDef, name: str) -> str:
     return join_lines([
         f"public class {to_list_request(cdef)} {'{'}",
@@ -238,6 +320,10 @@ def _data_client(cdef: CDef, aconf: AConf) -> str:
             _data_client_delete(cdef, aconf),
             _data_client_ids(cdef, aconf),
             _data_client_finds(cdef, aconf),
+            _data_client_upsert(cdef, aconf),
+            _data_client_create_many(cdef, aconf),
+            _data_client_update_many(cdef, aconf),
+            _data_client_delete_many(cdef, aconf),
         ], 2),
         '}'
     ], 1)
@@ -440,4 +526,54 @@ def _data_client_finds(cdef: CDef, aconf: AConf) -> str:
         '    }',
         '\n',
         _data_client_find_4(cdef, query_items)
+    ], 1)
+
+
+def _data_client_upsert(cdef: CDef, aconf: AConf) -> str:
+    if 'U' not in aconf.actions:
+        return ''
+    return join_lines([
+        f'    public func upsert(query: {to_seek_query(cdef)}, data: {to_update_input(cdef)}) async throws -> {to_result(cdef)} {"{"}',
+        f'        let input = {to_query_data(cdef)}(_query: query, _data: data)',
+        f'        let request = {to_upsert_request(cdef)}(input: input)',
+        '        return try await request.exec()',
+        '    }'
+    ], 1)
+
+
+def _data_client_create_many(cdef: CDef, aconf: AConf) -> str:
+    if 'C' not in aconf.actions:
+        return ''
+    return join_lines([
+        f'    public func createMany(input: [{to_create_input(cdef)}], query: {to_single_query(cdef)}? = nil) -> {to_create_many_request(cdef)} {"{"}',
+        f'        return {to_create_many_request(cdef)}(input: input, query: query)',
+        '    }',
+        '\n',
+        f'    public func createMany(input: [{to_create_input(cdef)}], query: {to_single_query(cdef)}? = nil) async throws -> [{to_result(cdef)}] {"{"}',
+        f'        let request = {to_create_many_request(cdef)}(input: input, query: query)',
+        '        return try await request.exec()',
+        '    }'
+    ], 1)
+
+
+def _data_client_update_many(cdef: CDef, aconf: AConf) -> str:
+    if 'U' not in aconf.actions:
+        return ''
+    return join_lines([
+        f'    public func updateMany(query: {to_seek_query(cdef)}, data: {to_update_input(cdef)}) async throws -> {to_result(cdef)} {"{"}',
+        f'        let input = {to_query_data(cdef)}(_query: query, _data: data)',
+        f'        let request = {to_update_many_request(cdef)}(input: input)',
+        '        return try await request.exec()',
+        '    }'
+    ], 1)
+
+
+def _data_client_delete_many(cdef: CDef, aconf: AConf) -> str:
+    if 'D' not in aconf.actions:
+        return ''
+    return join_lines([
+        f'    public func delete(_ query: {to_seek_query(cdef)}? = nil) async throws {"{"}',
+        f'        let request = {to_delete_many_request(cdef)}(query: query)',
+        '        return try await request.exec()',
+        '    }'
     ], 1)

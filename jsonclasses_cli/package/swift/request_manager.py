@@ -75,6 +75,10 @@ struct RequestManager {'{'}
         try await request(method: "DELETE", url: url)
     {'}'}
 
+    func delete<U: Codable>(url: String, query: U? = nil) async throws {'{'}
+        try await request(method: "DELETE", url: url, query: query)
+    {'}'}
+
     func get<U: Codable, V: Codable>(
         url: String,
         query: U? = nil

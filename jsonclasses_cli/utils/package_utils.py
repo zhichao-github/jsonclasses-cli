@@ -47,7 +47,7 @@ def to_update_many_request(cdef: CDef) -> str:
 
 
 def to_upsert_request(cdef: CDef) -> str:
-    return cdef.name + 'UpsertRequrst'
+    return cdef.name + 'UpsertRequest'
 
 
 def to_create_many_request(cdef: CDef) -> str:
