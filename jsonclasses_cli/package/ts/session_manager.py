@@ -46,6 +46,7 @@ class SessionManager {'{'}
 
     clearSession() {'{'}
         this.#session = undefined
+        localStorage.removeItem(this.#sessionKey)
     {'}'}
 {'}'}
     """.strip() + "\n"
