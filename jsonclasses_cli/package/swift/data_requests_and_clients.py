@@ -90,7 +90,7 @@ def _data_query_request_common(
         return self
     {'}'}
 
-    public func pick(_ picks: [{to_result_picks(cdef)}]) async throws -> {to_session(cdef) if is_sign_in else to_result(cdef) if single else to_list_result(cdef)} {'{'}
+    public func pick(_ picks: [{to_result_picks(cdef)}]) async throws -> {to_session(cdef, 'swift') if is_sign_in else to_result(cdef) if single else to_list_result(cdef)} {'{'}
         return try await self.pick(picks).exec()
     {'}'}
 
@@ -100,32 +100,32 @@ def _data_query_request_common(
         return self
     {'}'}
 
-    public func omit(_ omits: [{to_result_picks(cdef)}]) async throws -> {to_session(cdef) if is_sign_in else to_result(cdef) if single else to_list_result(cdef)} {'{'}
+    public func omit(_ omits: [{to_result_picks(cdef)}]) async throws -> {to_session(cdef, 'swift') if is_sign_in else to_result(cdef) if single else to_list_result(cdef)} {'{'}
         return try await self.omit(omits).exec()
-    {'}'}""".strip('\n'), _data_query_request_includes(cdef, single, is_sign_in)], 2)
+    {'}'}""".strip('\n'), _data_query_request_includes(cdef, single, is_create_many, is_sign_in)], 2)
 
 
-def _data_query_request_include(cdef: CDef, item: tuple[str, str], single: bool = True, is_sign_in: bool = False) -> str:
+def _data_query_request_include(cdef: CDef, item: tuple[str, str], single: bool = True, is_create_many: bool = False, is_sign_in: bool = False) -> str:
     return f"""
     public func include(_ ref: {to_include_key(cdef.name, item[0])}, _ query: {item[1]}? = nil) -> Self {'{'}
-        if self.query == nil {'{'} self.query = {to_single_query(cdef) if single else to_list_query(cdef)}() {'}'}
+        if self.query == nil {'{'} self.query = {to_single_query(cdef) if single or is_create_many else to_list_query(cdef)}() {'}'}
         self.query = self.query!.include(ref, query)
         return self
     {'}'}
 
-    public func include(_ ref: {to_include_key(cdef.name, item[0])}, _ query: {item[1]}? = nil) async throws -> {to_session(cdef) if is_sign_in else to_result(cdef) if single else to_list_result(cdef)} {'{'}
-        if self.query == nil {'{'} self.query = {to_single_query(cdef) if single else to_list_query(cdef)}() {'}'}
+    public func include(_ ref: {to_include_key(cdef.name, item[0])}, _ query: {item[1]}? = nil) async throws -> {to_session(cdef, 'swift') if is_sign_in else to_result(cdef) if single else to_list_result(cdef)} {'{'}
+        if self.query == nil {'{'} self.query = {to_single_query(cdef) if single or is_create_many else to_list_query(cdef)}() {'}'}
         self.query = self.query!.include(ref, query)
         return try await self.exec()
     {'}'}
     """.strip('\n')
 
 
-def _data_query_request_includes(cdef: CDef, single: bool = True, is_sign_in: bool = False) -> str:
+def _data_query_request_includes(cdef: CDef, single: bool = True, is_create_many: bool = False, is_sign_in: bool = False) -> str:
     items = class_include_items(cdef)
     if len(items) == 0:
         return ''
-    return join_lines(map(lambda i: _data_query_request_include(cdef, i, single, is_sign_in), items), 2)
+    return join_lines(map(lambda i: _data_query_request_include(cdef, i, single, is_create_many, is_sign_in), items), 2)
 
 
 def _data_create_request(cdef: CDef, name: str) -> str:
@@ -218,16 +218,19 @@ def _data_upsert_request(cdef: CDef, name: str) -> str:
     return join_lines([
         f"public class {to_upsert_request(cdef)} {'{'}",
         f"    internal var input: {to_query_data(cdef)}",
+        f"    internal var query: {to_seek_query(cdef)}?",
         '\n',
-        f"    internal init(input: {to_query_data(cdef)}) {'{'}",
+        f"    internal init(input: {to_query_data(cdef)}, query: {to_seek_query(cdef)}? = nil) {'{'}",
         '        self.input = input',
+        '        self.query = query',
         '    }',
         '\n',
         f"    internal func exec() async throws -> {to_result(cdef)} {'{'}",
         f"        return try await RequestManager.shared.post(",
         f'            url: "/{name}",',
-        f'            input: {to_many_request_type(cdef)}.upsert.getContent(input: self.input)',
-        f"        )",
+        f'            input: {to_many_request_type(cdef)}.upsert.getContent(input: self.input),',
+        "            query: self.query",
+        "        )",
         "    }",
         '}'
     ], 1)
@@ -244,7 +247,7 @@ def _data_create_many_request(cdef: CDef, name: str) -> str:
         '        self.query = query'
         '    }',
         '\n',
-        f"    internal func exec() async throws -> {to_result(cdef)} {'{'}",
+        f"    internal func exec() async throws -> [{to_result(cdef)}] {'{'}",
         f"        return try await RequestManager.shared.post(",
         f'            url: "/{name}", input: {to_many_request_type(cdef)}.create.getContent(input: self.input), query: query',
         f"        )",
@@ -259,14 +262,16 @@ def _data_update_many_request(cdef: CDef, name: str) -> str:
     return join_lines([
         f"public class {to_update_many_request(cdef)} {'{'}",
         f"    internal var input: {to_query_data(cdef)}",
+        f"    internal var query: {to_seek_query(cdef)}?",
         '\n',
-        f"    internal init(input: {to_query_data(cdef)}) {'{'}",
+        f"    internal init(input: {to_query_data(cdef)}, query: {to_seek_query(cdef)}? = nil) {'{'}",
         '        self.input = input',
+        '        self.query = query',
         '    }',
         '\n',
         f"    internal func exec() async throws -> [{to_result(cdef)}] {'{'}",
         f"        return try await RequestManager.shared.patch(",
-        f'            url: "/{name}", input: {to_many_request_type(cdef)}.update.getContent(input: self.input)',
+        f'            url: "/{name}", input: {to_many_request_type(cdef)}.update.getContent(input: self.input), query: self.query',
         f"        )",
         "    }",
         '}'
@@ -324,10 +329,11 @@ def _data_sign_in_request(cdef: CDef, name: str) -> str:
         '        self.query = query',
         '    }',
         '\n',
-        f"    internal func exec() async throws -> {to_session(cdef)} {'{'}",
-        f"        return try await RequestManager.shared.post(",
+        f"    internal func exec() async throws -> {to_session(cdef, 'swift')} {'{'}",
+        f"        SessionManager.shared.session = try await RequestManager.shared.post(",
         f'            url: "/{name}/session", input: input, query: query',
-        f"        )!",
+        "        )",
+        "        return SessionManager.shared.session!",
         "    }",
         '\n',
         _data_query_request_common(cdef, is_sign_in=True),
@@ -588,7 +594,7 @@ def _data_client_update_many(cdef: CDef, aconf: AConf) -> str:
     if 'U' not in aconf.actions:
         return ''
     return join_lines([
-        f'    public func updateMany(query: {to_seek_query(cdef)}, data: {to_update_input(cdef)}) async throws -> {to_result(cdef)} {"{"}',
+        f'    public func updateMany(query: {to_seek_query(cdef)}, data: {to_update_input(cdef)}) async throws -> [{to_result(cdef)}] {"{"}',
         f'        let input = {to_query_data(cdef)}(_query: query, _data: data)',
         f'        let request = {to_update_many_request(cdef)}(input: input)',
         '        return try await request.exec()',
@@ -611,7 +617,7 @@ def _data_client_sign_in(cdef: CDef) -> str:
     if not class_needs_session(cdef):
         return ''
     return join_lines([
-        f'    public func signIn(input: {to_session_input(cdef)}, query: {to_single_query(cdef)}? = nil) async throws {"{"}',
+        f'    public func signIn(input: {to_session_input(cdef)}, query: {to_single_query(cdef)}? = nil) async throws -> {to_session(cdef, "swift")} {"{"}',
         f'        let request = {to_sign_in_request(cdef)}(input: input, query: query)',
         '        return try await request.exec()',
         '    }'

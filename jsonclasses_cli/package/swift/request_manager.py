@@ -22,6 +22,14 @@ struct RequestManager {'{'}
         let _: Int? = try await request(method: method, url: url, input: nil as Int?, query: nil as Int?)
     {'}'}
 
+    func request<U: Codable>(
+        method: String,
+        url: String,
+        query: U? = nil
+    ) async throws {'{'}
+        let _: Int? = try await request(method: method, url: url, input: nil as Int?, query: query)
+    {'}'}
+
     func request<U: Codable, V: Codable>(
         method: String,
         url: String,

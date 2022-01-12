@@ -106,7 +106,9 @@ def to_session_input(cdef: CDef) -> str:
     return cdef.name + 'SessionInput'
 
 
-def to_session(cdef: CDef) -> str:
+def to_session(cdef: CDef, mode: str = 'ts') -> str:
+    if mode == 'swift':
+        return 'Session'
     return cdef.name + 'Session'
 
 
