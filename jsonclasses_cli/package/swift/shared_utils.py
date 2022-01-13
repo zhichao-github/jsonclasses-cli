@@ -9,7 +9,7 @@ from jsonclasses.modifiers.required_modifier import RequiredModifier
 from jsonclasses.modifiers.default_modifier import DefaultModifier
 from .codable_class import CodableClassItem, codable_class_item
 from .jtype_to_swift_type import jtype_to_swift_type
-from ...utils.package_utils import to_list_query, to_single_query
+from ...utils.package_utils import is_field_link, to_list_query, to_single_query
 
 
 def class_include_items(cdef: CDef) -> list[tuple[str, str]]:
@@ -50,7 +50,7 @@ def class_update_input_items(cdef: CDef) -> list[CodableClassItem]:
         if not field_can_update(field):
             continue
         name = camelize(field.name)
-        stype = jtype_to_swift_type(field.fdef, 'U')
+        stype = jtype_to_swift_type(field.fdef, 'U', is_field_link(field.fdef))
         local_key = is_field_local_key(field)
         item = codable_class_item('public', 'var', name, stype, True)
         items.append(item)
@@ -68,7 +68,7 @@ def class_create_input_items(cdef: CDef) -> list[CodableClassItem]:
             continue
         optional = not is_field_required_for_create(field)
         name = camelize(field.name)
-        stype = jtype_to_swift_type(field.fdef, 'C')
+        stype = jtype_to_swift_type(field.fdef, 'C', is_field_link(field.fdef))
         local_key = is_field_local_key(field)
         if local_key:
             optional = True

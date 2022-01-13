@@ -1,5 +1,6 @@
 from jsonclasses.cgraph import CGraph
 from jsonclasses.uconf import uconf
+from jsonclasses_cli.package.swift.link_codable import link_codable
 from .session_input import session_input
 from .import_lines import import_lines
 from .string_query import string_query
@@ -38,6 +39,7 @@ def main_program_content(cgraph: CGraph) -> str:
         # list query
         # dict query
         sort_order(),
+        link_codable(),
         *map(lambda e: data_enum(e), cgraph._enum_map.values()),
         *map(lambda c: data_class(c), cgraph._map.values()),
         *map(lambda c: session_input(c), session_input_cdefs(cgraph)),
