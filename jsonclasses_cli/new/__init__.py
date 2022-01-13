@@ -17,7 +17,8 @@ def new(dest: Path,
         include_user: bool | None,
         include_admin: bool | None,
         git_init: bool | None,
-        venv: bool | None):
+        venv: bool | None,
+        silent: bool = False):
     if interactive:
         if include_user is None:
             include_user = yesno(Prompt.ask('Do you want a user model?', choices=['Yes', 'No'], default='Yes'))
@@ -36,24 +37,25 @@ def new(dest: Path,
             git_init = True
         if venv is None:
             venv = True
-    write_file(dest / 'app.py', app_content(include_user=include_user, include_admin=include_admin))
-    write_file(dest / 'requirements.txt', req_content(include_user=include_user, include_admin=include_admin))
-    write_file(dest / 'config.json', conf_content(dest.name))
-    write_file(dest / 'mypy.ini', mypy_content())
-    write_file(dest / '.gitignore', gitignore_content())
-    write_file(dest / 'README.md', readme_content(dest))
+    write_file(dest / 'app.py', app_content(include_user=include_user, include_admin=include_admin), silent)
+    write_file(dest / 'requirements.txt', req_content(include_user=include_user, include_admin=include_admin), silent)
+    write_file(dest / 'config.json', conf_content(dest.name), silent)
+    write_file(dest / 'mypy.ini', mypy_content(), silent)
+    write_file(dest / '.gitignore', gitignore_content(), silent)
+    write_file(dest / 'README.md', readme_content(dest), silent)
     if git_init:
         if not (dest / '.git').is_dir():
-            run('git init')
+            run('git init', silent)
     if venv:
         if not ((dest / 'venv').is_dir() or (dest / '.venv').is_dir()):
             dest_venv = dest / '.venv'
-            run(f'python3 -m venv {dest_venv}')
+            run(f'python3 -m venv {dest_venv}', silent)
     if venv:
         venv_dir = dest / 'venv' if (dest / 'venv').is_dir() else dest / '.venv'
         venv_act = venv_dir / 'bin/activate'
-        run(f'source {venv_act}; pip install -r requirements.txt')
+        run(f'source {venv_act}; pip install -r requirements.txt', silent)
     else:
-        run('pip install -r requirements.txt')
-    print("🎉[green]Project is successfully created.[/green]")
-    print("\n    Run 'uvicorn app:app --reload' to start the development server.\n")
+        run('pip install -r requirements.txt', silent)
+    if not silent:
+        print("🎉[green]Project is successfully created.[/green]")
+        print("\n    Run 'uvicorn app:app --reload' to start the development server.\n")
