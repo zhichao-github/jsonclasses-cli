@@ -1,4 +1,5 @@
 from jsonclasses.cdef import CDef
+from jsonclasses.fdef import FDef, FStore
 from jsonclasses.cgraph import CGraph
 
 
@@ -118,3 +119,7 @@ def to_client(cdef: CDef) -> str:
 
 def to_sign_in_request(cdef: CDef) -> str:
     return cdef.name + 'SignInRequest'
+
+
+def is_field_link(fdef: FDef) -> bool:
+    return fdef.fstore == FStore.LOCAL_KEY or fdef.use_join_table

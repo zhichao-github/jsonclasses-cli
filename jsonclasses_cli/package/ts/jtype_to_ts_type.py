@@ -1,5 +1,6 @@
 from typing import Literal
-from jsonclasses.fdef import FStore, FType, FDef
+from jsonclasses.fdef import FType, FDef
+from ...utils.package_utils import is_field_link
 
 
 def jtype_to_ts_type(fdef: FDef, mode: Literal['C', 'U', 'R', 'Q'], is_link: bool = False) -> str:
@@ -65,6 +66,3 @@ def jtype_to_ts_type(fdef: FDef, mode: Literal['C', 'U', 'R', 'Q'], is_link: boo
             return " | ".join([jtype_to_ts_type(t.fdef, mode) for t in fdef.raw_union_types])
         case None:
             return "never"
-
-def is_field_link(fdef: FDef) -> bool:
-    return fdef.fstore == FStore.LOCAL_KEY or fdef.use_join_table

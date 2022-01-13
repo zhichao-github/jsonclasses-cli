@@ -1,8 +1,9 @@
 from typing import Literal
 from jsonclasses.fdef import FDef, FType
+from ...utils.package_utils import is_field_link
 
 
-def jtype_to_swift_type(fdef: FDef, mode: Literal['C', 'U', 'R', 'Q']) -> str:
+def jtype_to_swift_type(fdef: FDef, mode: Literal['C', 'U', 'R', 'Q'], is_link: bool = False) -> str:
     match fdef.ftype:
         case FType.STR:
             if mode == 'Q':
@@ -37,16 +38,22 @@ def jtype_to_swift_type(fdef: FDef, mode: Literal['C', 'U', 'R', 'Q']) -> str:
         case FType.ENUM:
             return fdef.enum_class.__name__
         case FType.LIST:
-            return '[' + jtype_to_swift_type(fdef.item_types.fdef, mode) + ']'
+            return '[' + jtype_to_swift_type(fdef.item_types.fdef, mode, is_field_link(fdef)) + ']'
         case FType.DICT:
             return '[String: ' + jtype_to_swift_type(fdef.item_types.fdef, mode) + ']'
         case FType.INSTANCE:
             if mode == 'R':
                 return fdef.inst_cls.__name__
             elif mode == 'C':
-                return fdef.inst_cls.__name__ + 'CreateInput'
+                result = fdef.inst_cls.__name__ + 'CreateInput'
+                if is_link:
+                    return f'CreateOrLink<{result}>'
+                return result
             elif mode == 'U':
-                return fdef.inst_cls.__name__ + 'UpdateInput'
+                result = fdef.inst_cls.__name__ + 'UpdateInput'
+                if is_link:
+                    return f'UpdateOrLink<{result}>'
+                return result
             else:
                 return 'never'
         case FType.ANY:

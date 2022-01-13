@@ -11,9 +11,9 @@ from .shared_utils import (
     is_field_queryable)
 from ...utils.package_utils import (
     to_create_input, to_include, to_include_key, to_list_query, to_result, to_result_picks, to_seek_query, to_single_query,
-    to_sort_orders, to_update_input, to_query_data)
+    to_sort_orders, to_update_input, to_query_data, is_field_link)
 from ...utils.join_lines import join_lines
-from .jtype_to_ts_type import is_field_link, jtype_to_ts_type
+from .jtype_to_ts_type import jtype_to_ts_type
 
 
 def data_interface(cdef: CDef) -> str:
