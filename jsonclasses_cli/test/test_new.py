@@ -3,7 +3,7 @@ from unittest.mock import patch
 from unittest import TestCase
 from tempfile import TemporaryDirectory
 from pathlib import Path
-from ..new import new, app_content
+from ..new import new
 
 
 class TestNew(TestCase):
@@ -11,14 +11,13 @@ class TestNew(TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         cls.temp_dir = TemporaryDirectory()
-        cls.temp_path = Path(str(cls.temp_dir.name)) / 'my_new_app'
 
     @classmethod
     def tearDownClass(cls) -> None:
         cls.temp_dir.cleanup()
 
     def setUp(self) -> None:
-        self.__class__.temp_dir.cleanup()
+        self.temp_path = Path(str(self.temp_dir.name)) / "new_app"
 
 
     def test_new_create_all_filed(self) -> None:
@@ -36,7 +35,9 @@ class TestNew(TestCase):
         self.assertTrue(gitignore.is_file(), gitignore.name)
         self.assertTrue(read_me.is_file(), read_me.name)
 
-    def test_new_create_app_filed_without_user_and_admin(self) -> None:
-        new(self.temp_path, None, False, False, None, None, True)
-        app = Path(self.temp_path) / 'app.py'
-        self.assertEqual(app.read_text(), app_content(False, False))
+    # @patch('builtins.input', side_effect=['Yes', 'Yes', 'Yes', 'Yes'])
+    # def test_new_create_app_filed_without_user_and_admin(self, stdout) -> None:
+    #     chdir(Path(str(self.temp_dir.name)))
+    #     runner = CliRunner()
+    #     result = runner.invoke(command_new, ["name"])
+    #     print(result.stderr_bytes, stdout.gevalue())
