@@ -1,9 +1,10 @@
 from __future__ import annotations
-from unittest.mock import patch
+from click.testing import CliRunner
 from unittest import TestCase
 from tempfile import TemporaryDirectory
 from pathlib import Path
 from ..new import new
+from .. import new as command_new
 
 
 class TestNew(TestCase):
@@ -35,9 +36,9 @@ class TestNew(TestCase):
         self.assertTrue(gitignore.is_file(), gitignore.name)
         self.assertTrue(read_me.is_file(), read_me.name)
 
-    # @patch('builtins.input', side_effect=['Yes', 'Yes', 'Yes', 'Yes'])
-    # def test_new_create_app_filed_without_user_and_admin(self, stdout) -> None:
-    #     chdir(Path(str(self.temp_dir.name)))
-    #     runner = CliRunner()
-    #     result = runner.invoke(command_new, ["name"])
-    #     print(result.stderr_bytes, stdout.gevalue())
+    def test_new_create_app_filed_without_user_and_admin(self) -> None:
+        runner = CliRunner()
+        with runner.isolated_filesystem(self.temp_path):
+            result = runner.invoke(command_new, args='test', input='No\nNo\nYes\nYes\n')
+            print(self.temp_path)
+            print(result.output)
