@@ -2,7 +2,7 @@ from __future__ import annotations
 from unittest import TestCase
 from tempfile import TemporaryDirectory
 from pathlib import Path
-from ..new import (new, conf_content, gitignore_content, readme_content,
+from ..jsonclasses_cli.new import (new, conf_content, gitignore_content, readme_content,
                    app_content, mypy_content, req_content)
 
 
