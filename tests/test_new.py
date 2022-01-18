@@ -2,7 +2,7 @@ from __future__ import annotations
 from unittest import TestCase
 from tempfile import TemporaryDirectory
 from pathlib import Path
-from ..jsonclasses_cli.new import (new, conf_content, gitignore_content, readme_content,
+from jsonclasses_cli.new import (new, conf_content, gitignore_content, readme_content,
                    app_content, mypy_content, req_content)
 
 
@@ -22,12 +22,12 @@ class TestNew(TestCase):
 
     def test_new_create_all_filed(self) -> None:
         new(self.temp_path, None, None, None, None, None, True)
-        app = Path(self.temp_path) / 'app.py'
-        requirements = Path(self.temp_path) / 'requirements.txt'
-        config = Path(self.temp_path) / 'config.json'
-        mypy = Path(self.temp_path) / 'mypy.ini'
-        gitignore = Path(self.temp_path) / '.gitignore'
-        read_me = Path(self.temp_path) / 'README.md'
+        app = self.temp_path / 'app.py'
+        requirements = self.temp_path / 'requirements.txt'
+        config = self.temp_path / 'config.json'
+        mypy = self.temp_path / 'mypy.ini'
+        gitignore = self.temp_path / '.gitignore'
+        read_me = self.temp_path / 'README.md'
         self.assertTrue(app.is_file(), app.name)
         self.assertTrue(requirements.is_file(), requirements.name)
         self.assertTrue(config.is_file(), config.name)

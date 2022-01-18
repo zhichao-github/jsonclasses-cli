@@ -10,8 +10,8 @@ from .ts import ts
 
 
 def package(dest: Path, app_file: Path, lang: Literal['ts', 'swift', 'kotlin']):
-    path.append(str(dest))
-    import_module(splitext(app_file.name)[0], str(dest)).__dict__
+    path.append(str(app_file.parent))
+    import_module(splitext(app_file.name)[0], str(app_file.parent)).__dict__
     cgraph = CGraph('default')
     match lang:
         case 'swift':
