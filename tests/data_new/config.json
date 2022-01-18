@@ -1,0 +1,19 @@
+{
+    "pymongo": {
+        "url": "mongodb://localhost:27017/new_app"
+    },
+    "operator": {
+        
+    },
+    "package": {
+        "ts": {
+            "url": "http://127.0.0.1:8000"
+        },
+        "swift": {
+            "url": "http://127.0.0.1:8000"
+        },
+        "kotlin": {
+            "url": "http://127.0.0.1:8000"
+        }
+    }
+}

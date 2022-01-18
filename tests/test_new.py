@@ -1,9 +1,10 @@
 from __future__ import annotations
+import re
+from os import getcwd
 from unittest import TestCase
 from tempfile import TemporaryDirectory
 from pathlib import Path
-from jsonclasses_cli.new import (new, conf_content, gitignore_content, readme_content,
-                   app_content, mypy_content, req_content)
+from jsonclasses_cli.new import new
 
 
 class TestNew(TestCase):
@@ -11,6 +12,7 @@ class TestNew(TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         cls.temp_dir = TemporaryDirectory()
+        cls.data_path = Path(getcwd()) / 'tests' / 'data_new'
 
     @classmethod
     def tearDownClass(cls) -> None:
@@ -37,39 +39,55 @@ class TestNew(TestCase):
 
     def test_new_app_content_without_admin_and_user(self) -> None:
         new(self.temp_path, None, None, None, None, None, True)
-        app = Path(self.temp_path) / 'app.py'
-        self.assertEqual(app.read_text(), app_content(False, False))
+        result = self.temp_path / 'app.py'
+        expect = self.data_path / 'app.py'
+        self.assertEqual(result.read_text(), expect.read_text())
 
-    def test_new_app_content_without_admin(self) -> None:
+    def test_new_app_content_with_user(self) -> None:
         new(self.temp_path, None, True, None, None, None, True)
-        app = Path(self.temp_path) / 'app.py'
-        self.assertEqual(app.read_text(), app_content(True, False))
+        result = self.temp_path / 'app.py'
+        expect = self.data_path / 'app_with_u.py'
+        self.assertEqual(result.read_text(), expect.read_text())
 
-    def test_new_app_content_without_user(self) -> None:
+    def test_new_app_content_with_admin(self) -> None:
         new(self.temp_path, None, None, True, None, None, True)
-        app = Path(self.temp_path) / 'app.py'
-        self.assertEqual(app.read_text(), app_content(False, True))
+        result = self.temp_path / 'app.py'
+        expect = self.data_path / 'app_with_a.py'
+        self.assertEqual(result.read_text(), expect.read_text())
 
     def test_new_app_content_with_user_and_admin(self) -> None:
         new(self.temp_path, None, True, True, None, None, True)
-        app = Path(self.temp_path) / 'app.py'
-        self.assertEqual(app.read_text(), app_content(True, True))
+        result = self.temp_path / 'app.py'
+        expect = self.data_path / 'app_with_ua.py'
+        self.assertEqual(result.read_text(), expect.read_text())
 
-    def test_new_config_mypy_gitignore_and_readme_content(self) -> None:
+    def test_new_genarate_content_of_config(self) -> None:
+        new(self.temp_path, None, True, True, None, None, True)
+        result = (self.temp_path / 'config.json').read_text()
+        expect = (self.data_path / 'config.json').read_text()
+        filter_result = re.sub(r'\"secretKey\": \".*\"', '', result)
+        self.assertEqual(filter_result, expect)
+
+    def test_new_genarate_content_of_requirements(self) -> None:
+        new(self.temp_path, None, False, False, None, None, True)
+        result = (self.temp_path / 'requirements.txt').read_text()
+        expect = (self.data_path / 'requirements.txt').read_text()
+        self.assertEqual(result, expect)
+
+    def test_new_genarate_content_of_requirements_with_user_or_admin(self) -> None:
+        new(self.temp_path, None, True, False, None, None, True)
+        result = (self.temp_path / 'requirements.txt').read_text()
+        expect = (self.data_path / 'requirements_with_ua.txt').read_text()
+        self.assertEqual(result, expect)
+
+    def test_new_genarate_content_of_mypy_gitignore_and_readme(self) -> None:
         new(self.temp_path, None, None, None, None, None, True)
-        # config = Path(self.temp_path) / 'config.json'
-        mypy = Path(self.temp_path) / 'mypy.ini'
-        gitignore = Path(self.temp_path) / '.gitignore'
-        read_me = Path(self.temp_path) / 'README.md'
-        # self.assertEqual(config.read_text(), conf_content(config.name))
-        self.assertEqual(mypy.read_text(), mypy_content())
-        self.assertEqual(gitignore.read_text(), gitignore_content())
-        self.assertEqual(read_me.read_text(), readme_content(read_me.parent))
-
-    # test command
-    # def test_new_create_app_use_command(self) -> None:
-    #     runner = CliRunner()
-    #     with runner.isolated_filesystem(self.temp_path):
-    #         result = runner.invoke(command_new, 'test', input='No\nNo\nNo\nNo\n', color=True)
-    #         print(self.temp_path)
-    #         print(result.output)
+        mypy = self.temp_path / 'mypy.ini'
+        gitignore = self.temp_path / '.gitignore'
+        read_me = self.temp_path / 'README.md'
+        expect_mypy = self.data_path / 'mypy.ini'
+        expect_gitignore = self.data_path / '.gitignore'
+        expect_read_me = self.data_path / 'README.md'
+        self.assertEqual(mypy.read_text(), expect_mypy.read_text())
+        self.assertEqual(gitignore.read_text(), expect_gitignore.read_text())
+        self.assertEqual(read_me.read_text(), expect_read_me.read_text())
