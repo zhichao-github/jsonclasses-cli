@@ -1,0 +1,5 @@
+jsonclasses>=3.2.0,<4.0.0
+jsonclasses-pymongo>=3.2.0,<4.0.0
+jsonclasses-server>=3.2.0,<4.0.0
+thunderlight>=0.1.2,<1.0.0
+inflection-plus>=0.1.0,<1.0.0
