@@ -11,17 +11,16 @@ class TestPackage(TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         cls.temp_dir = TemporaryDirectory()
+        cls.temp_path = Path(str(cls.temp_dir.name)) / "app_path"
         cls.cls_dir = Path(getcwd()) / 'tests' / 'classes'
 
     @classmethod
     def tearDownClass(cls) -> None:
         cls.temp_dir.cleanup()
 
-    def setUp(self) -> None:
-        self.temp_path = Path(str(self.temp_dir.name)) / "app_path"
 
-    # def test_create_simple_song_ts_package(self) -> None:
-    #     simple_song_path = self.cls_dir / 'app.py'
-    #     package(self.temp_path, simple_song_path, 'ts')
-    #     print(simple_song_path)
+    def test_create_simple_song_ts_package(self) -> None:
+        simple_song_path = self.cls_dir / 'simple_song.py'
+        package(self.temp_path, simple_song_path, 'ts', True)
+        print(simple_song_path)
         # self.assertEqual()

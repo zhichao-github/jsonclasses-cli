@@ -9,14 +9,14 @@ from .swift import swift
 from .ts import ts
 
 
-def package(dest: Path, app_file: Path, lang: Literal['ts', 'swift', 'kotlin']):
+def package(dest: Path, app_file: Path, lang: Literal['ts', 'swift', 'kotlin'], silent: bool = False):
     path.append(str(app_file.parent))
     import_module(splitext(app_file.name)[0], str(app_file.parent)).__dict__
     cgraph = CGraph('default')
     match lang:
         case 'swift':
-            swift(dest, cgraph)
+            swift(dest, cgraph, silent)
         case 'kotlin':
-            kotlin(dest, cgraph)
+            kotlin(dest, cgraph, silent)
         case 'ts':
-            ts(dest, cgraph)
+            ts(dest, cgraph, silent)
