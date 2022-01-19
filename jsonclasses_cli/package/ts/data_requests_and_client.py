@@ -21,11 +21,11 @@ def data_requests_and_clients(cdef: CDef) -> str:
         _data_update_request(cdef, aconf.name) if 'U' in aconf.actions else '',
         _data_delete_request(cdef, aconf.name) if 'D' in aconf.actions else '',
         _data_id_request(cdef, aconf.name) if 'R' in aconf.actions else '',
-        _data_upsert_request(cdef, aconf.name),
-        _data_create_many_request(cdef, aconf.name),
-        _data_update_many_request(cdef, aconf.name),
-        _data_delete_many_request(cdef, aconf.name),
-        _data_list_request(cdef, aconf.name),
+        _data_upsert_request(cdef, aconf.name) if all( element in aconf.actions for element in ['C','U']) else '',
+        _data_create_many_request(cdef, aconf.name) if 'C' in aconf.actions else '',
+        _data_update_many_request(cdef, aconf.name) if 'U' in aconf.actions else '',
+        _data_delete_many_request(cdef, aconf.name) if 'D' in aconf.actions else '',
+        _data_list_request(cdef, aconf.name) if 'L' in aconf.actions else '',
         sign_in_request(cdef),
         _data_client(cdef, aconf)
     ], 2)
@@ -273,6 +273,7 @@ def _data_client(cdef: CDef, aconf: AConf) -> str:
         _data_client_create(cdef, aconf),
         _data_client_id(cdef, aconf),
         _data_client_update(cdef, aconf),
+        _data_client_upsert(cdef, aconf),
         _data_client_find(cdef, aconf),
         _data_client_delete(cdef, aconf),
         _sign_in(cdef),
@@ -312,14 +313,21 @@ def _data_client_update(cdef: CDef, aconf: AConf) -> str:
         f'        return new {to_update_request(cdef)}(id, input, query)',
         '    }',
         '\n',
-        f'    upsert(input: {to_query_data(cdef)}): {to_upsert_request(cdef)}<{cdef.name}> {"{"}',
-        f'        return new {to_upsert_request(cdef)}(input)',
-        '    }',
-        '\n',
         f'    updateMany(input: {to_query_data(cdef)}): {to_update_many_request(cdef)}<{cdef.name}> {"{"}',
         f'        return new {to_update_many_request(cdef)}(input)',
         '    }'
     ])
+
+
+def _data_client_upsert(cdef: CDef, aconf: AConf) -> str:
+    if not all( element in aconf.actions for element in ['C','U']):
+        return ''
+    return join_lines([
+        f'    upsert(input: {to_query_data(cdef)}): {to_upsert_request(cdef)}<{cdef.name}> {"{"}',
+        f'        return new {to_upsert_request(cdef)}(input)',
+        '    }',
+    ])
+    
 
 
 def _data_client_find(cdef: CDef, aconf: AConf) -> str:
