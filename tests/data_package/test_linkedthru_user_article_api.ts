@@ -168,27 +168,37 @@ export interface User {
     id: string
     username: string
     phoneNum?: string
+    articles: Article[]
 }
 
 export interface UserCreateInput {
     username: string
     password: string
     phoneNum?: string
+    articles: (ArticleCreateInput | Link)[]
 }
 
 export interface UserUpdateInput {
     username?: string
     password?: string
     phoneNum?: string | null
+    articles?: (ArticleUpdateInput | Link | UnLink)[]
 }
 
 type UserSortOrder = 'username' | '-username' | 'phoneNum' | '-phoneNum'
 
-type UserResultPick = 'id' | 'username' | 'phoneNum'
+type UserResultPick = 'id' | 'username' | 'phoneNum' | 'articles'
+
+interface UserArticlesInclude {
+    articles?: ArticleListQuery
+}
+
+type UserInclude = UserArticlesInclude
 
 interface UserSingleQuery {
     _pick?: UserResultPick[]
     _omit?: UserResultPick[]
+    _includes?: UserInclude[]
 }
 
 interface UserListQuery {
@@ -202,6 +212,7 @@ interface UserListQuery {
     _pageSize?: number
     _pick?: UserResultPick[]
     _omit?: UserResultPick[]
+    _includes?: UserInclude[]
 }
 
 interface UserSeekQuery {
@@ -220,25 +231,35 @@ export interface Article {
     id: string
     title: string
     content?: string
+    users: User[]
 }
 
 export interface ArticleCreateInput {
     title: string
     content?: string
+    users: (UserCreateInput | Link)[]
 }
 
 export interface ArticleUpdateInput {
     title?: string
     content?: string | null
+    users?: (UserUpdateInput | Link | UnLink)[]
 }
 
 type ArticleSortOrder = 'title' | '-title' | 'content' | '-content'
 
-type ArticleResultPick = 'id' | 'title' | 'content'
+type ArticleResultPick = 'id' | 'title' | 'content' | 'users'
+
+interface ArticleUsersInclude {
+    users?: UserListQuery
+}
+
+type ArticleInclude = ArticleUsersInclude
 
 interface ArticleSingleQuery {
     _pick?: ArticleResultPick[]
     _omit?: ArticleResultPick[]
+    _includes?: ArticleInclude[]
 }
 
 interface ArticleListQuery {
@@ -252,6 +273,7 @@ interface ArticleListQuery {
     _pageSize?: number
     _pick?: ArticleResultPick[]
     _omit?: ArticleResultPick[]
+    _includes?: ArticleInclude[]
 }
 
 interface ArticleSeekQuery {
@@ -392,7 +414,11 @@ class UserCreateRequest<T extends Partial<User>> extends Promise<T> {
         return this
     }
 
-    
+    include(includes: UserInclude[]): UserCreateRequest<T> {
+        this.#query = {...this.#query, _includes: includes }
+        return this
+    }
+
     async exec(): Promise<T> {
         return await RequestManager.share.post('/users', this.#input, this.#query)
     }
@@ -421,7 +447,11 @@ class UserUpdateRequest<T extends Partial<User>> extends Promise<T> {
         return this
     }
 
-    
+    include(includes: UserInclude[]): UserUpdateRequest<T> {
+        this.#query = {...this.#query, _includes: includes }
+        return this
+    }
+
     async exec(): Promise<User> {
         return await RequestManager.share.patch(`/users/${this.#id}`, this.#input, this.#query)
     }
@@ -461,7 +491,11 @@ class UserIDRequest<T extends Partial<User>> extends Promise<T> {
         return this
     }
 
-    
+    include(includes: UserInclude[]): UserIDRequest<T> {
+        this.#query = {...this.#query, _includes: includes }
+        return this
+    }
+
     async exec(): Promise<User> {
         return await RequestManager.share.get(`/users/${this.#id}`, this.#query)
     }
@@ -503,7 +537,11 @@ class UserCreateManyRequest<T extends Partial<User>> extends Promise<T> {
         return this
     }
 
-    
+    include(includes: UserInclude[]): UserCreateManyRequest<T> {
+        this.#query = {...this.#query, _includes: includes }
+        return this
+    }
+
     async exec(): Promise<T[]> {
         return await RequestManager.share.post('/users', { '_create': this.#input })
     }
@@ -531,7 +569,11 @@ class UserUpdateManyRequest<T extends Partial<User>> extends Promise<T> {
         return this
     }
 
-    
+    include(includes: UserInclude[]): UserUpdateManyRequest<T> {
+        this.#query = {...this.#query, _includes: includes }
+        return this
+    }
+
     async exec(): Promise<User> {
         return await RequestManager.share.patch('/users', { '_update': this.#input })
     }
@@ -597,7 +639,11 @@ class UserListRequest<T extends Partial<User>> extends Promise<T[]> {
         return this
     }
 
-    
+    include(includes: UserInclude[]): UserListRequest<T> {
+        this.#query = {...this.#query, _includes: includes }
+        return this
+    }
+
     async exec(): Promise<User[]> {
         return await RequestManager.share.get('/users',this.#query)
     }
@@ -624,7 +670,11 @@ class UserSignInRequest<T extends Partial<UserSession>> extends Promise<T> {
         return this
     }
 
-    
+    include(includes: UserInclude[]): UserSignInRequest<T> {
+        this.#query = {...this.#query, _includes: includes }
+        return this
+    }
+
     async exec(): Promise<UserSession> {
         const session = await RequestManager.share.post('/users/session', this.#input, this.#query) as UserSession
         SessionManager.share.setSession(session)
@@ -698,7 +748,11 @@ class ArticleCreateRequest<T extends Partial<Article>> extends Promise<T> {
         return this
     }
 
-    
+    include(includes: ArticleInclude[]): ArticleCreateRequest<T> {
+        this.#query = {...this.#query, _includes: includes }
+        return this
+    }
+
     async exec(): Promise<T> {
         return await RequestManager.share.post('/articles', this.#input, this.#query)
     }
@@ -727,7 +781,11 @@ class ArticleUpdateRequest<T extends Partial<Article>> extends Promise<T> {
         return this
     }
 
-    
+    include(includes: ArticleInclude[]): ArticleUpdateRequest<T> {
+        this.#query = {...this.#query, _includes: includes }
+        return this
+    }
+
     async exec(): Promise<Article> {
         return await RequestManager.share.patch(`/articles/${this.#id}`, this.#input, this.#query)
     }
@@ -767,7 +825,11 @@ class ArticleIDRequest<T extends Partial<Article>> extends Promise<T> {
         return this
     }
 
-    
+    include(includes: ArticleInclude[]): ArticleIDRequest<T> {
+        this.#query = {...this.#query, _includes: includes }
+        return this
+    }
+
     async exec(): Promise<Article> {
         return await RequestManager.share.get(`/articles/${this.#id}`, this.#query)
     }
@@ -809,7 +871,11 @@ class ArticleCreateManyRequest<T extends Partial<Article>> extends Promise<T> {
         return this
     }
 
-    
+    include(includes: ArticleInclude[]): ArticleCreateManyRequest<T> {
+        this.#query = {...this.#query, _includes: includes }
+        return this
+    }
+
     async exec(): Promise<T[]> {
         return await RequestManager.share.post('/articles', { '_create': this.#input })
     }
@@ -837,7 +903,11 @@ class ArticleUpdateManyRequest<T extends Partial<Article>> extends Promise<T> {
         return this
     }
 
-    
+    include(includes: ArticleInclude[]): ArticleUpdateManyRequest<T> {
+        this.#query = {...this.#query, _includes: includes }
+        return this
+    }
+
     async exec(): Promise<Article> {
         return await RequestManager.share.patch('/articles', { '_update': this.#input })
     }
@@ -903,7 +973,11 @@ class ArticleListRequest<T extends Partial<Article>> extends Promise<T[]> {
         return this
     }
 
-    
+    include(includes: ArticleInclude[]): ArticleListRequest<T> {
+        this.#query = {...this.#query, _includes: includes }
+        return this
+    }
+
     async exec(): Promise<Article[]> {
         return await RequestManager.share.get('/articles',this.#query)
     }
