@@ -1,4 +1,4 @@
-def request_manager(base_url: str) -> str:
+def request_manager(base_url: str,use_session:bool) -> str:
     return f"""
 class RequestManager {"{"}
 
@@ -8,7 +8,7 @@ class RequestManager {"{"}
 
 
     get headers() {"{"}
-        const token = SessionManager.share.hasSession() ? SessionManager.share.getToken() : undefined
+        const token = {'SessionManager.share.hasSession() ? SessionManager.share.getToken() : ' if use_session else 'undefined'}
         return token ? {"{"}
             headers: {"{"}
                 'Authorization': `Bearer ${"{"}token{"}"}`

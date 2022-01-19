@@ -1,5 +1,5 @@
 from typing import cast
-from inflection import camelize, underscore
+from inflection import camelize, pluralize
 from jsonclasses.cdef import CDef
 from jsonclasses_server.aconf import AConf
 from .codable_class import CodableClassItem
@@ -15,8 +15,7 @@ from ...utils.package_utils import (
 def data_client_instances(cdef: CDef) -> str:
     if not class_needs_api(cdef):
         return ''
-    aconf = cast(AConf, cdef.cls.aconf)
-    var_name = camelize(underscore(aconf.name))
+    var_name = camelize(pluralize(cdef.name))
     return f'public var {var_name} = {to_client(cdef)}()'
 
 
