@@ -8,7 +8,7 @@ class RequestManager {"{"}
 
 
     get headers() {"{"}
-        const token = {'SessionManager.share.hasSession() ? SessionManager.share.getToken() : ' if use_session else 'undefined'}
+        const token = {'SessionManager.share.hasSession() ? SessionManager.share.getToken() : ' if use_session else ''} undefined 
         return token ? {"{"}
             headers: {"{"}
                 'Authorization': `Bearer ${"{"}token{"}"}`

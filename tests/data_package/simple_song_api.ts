@@ -223,7 +223,7 @@ class RequestManager {
 
 
     get headers() {
-        const token = undefined
+        const token =  undefined 
         return token ? {
             headers: {
                 'Authorization': `Bearer ${token}`
