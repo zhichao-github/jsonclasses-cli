@@ -24,6 +24,8 @@ class TestPackage(TestCase):
 
     def test_create_simple_song_ts_package(self) -> None:
 
+        simple_song_path = self.cls_dir / 'app.py'
+
         package(self.temp_path, simple_song_path, 'ts', True)
         ts_path = self.temp_path/'packages' / 'ts'
         self.assertTrue(ts_path.exists())
