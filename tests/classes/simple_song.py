@@ -4,7 +4,7 @@ from jsonclasses import jsonclass, types
 from jsonclasses_server import api
 
 @api
-@jsonclass
+@jsonclass(class_graph='simple_song')
 class SimpleSong:
     id: str = types.readonly.str.primary.mongoid.required
     name: str
