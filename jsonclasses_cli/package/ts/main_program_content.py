@@ -36,9 +36,9 @@ def main_program_content(cgraph: CGraph) -> str:
         *map(lambda c: session_input(c), session_input_cdefs(cgraph)),
         session(session_classes),
         session_manager(session_classes) if use_session else '',
-        request_manager(request_url),
+        request_manager(request_url,use_session),
         *map(lambda c: data_requests_and_clients(c), cgraph._map.values()),
-        class_api(cgraph),
+        class_api(cgraph,use_session),
         _export_api()
     ], 3)
 
