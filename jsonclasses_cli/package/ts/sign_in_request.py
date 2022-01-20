@@ -3,7 +3,7 @@ from jsonclasses.cdef import CDef
 from jsonclasses_server.aconf import AConf
 from ...utils.package_utils import (class_needs_session, to_include, to_result_picks,
                                     to_session_input, to_sign_in_request, to_session, to_single_query)
-
+from .shared_utils import interface_required_include
 
 def sign_in_request(cdef: CDef) -> str:
     if not class_needs_session(cdef):
@@ -22,7 +22,7 @@ class {to_sign_in_request(cdef)}<T extends Partial<{to_session(cdef)}>> extends 
     {'}'}
 
     {_data_query_request_common(cdef, to_sign_in_request(cdef))}
-    {_data_query_request_includes(cdef, to_sign_in_request(cdef))}
+    {_data_query_request_includes(cdef, to_sign_in_request(cdef)) if interface_required_include(cdef) else ''}
     async exec(): Promise<{to_session(cdef)}> {'{'}
         const session = await RequestManager.share.post('/{name}/session', this.#input, this.#query) as {to_session(cdef)}
         SessionManager.share.setSession(session)

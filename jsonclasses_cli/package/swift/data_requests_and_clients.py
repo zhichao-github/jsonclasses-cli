@@ -1,5 +1,5 @@
 from typing import cast
-from inflection import camelize, underscore
+from inflection import camelize, pluralize
 from jsonclasses.cdef import CDef
 from jsonclasses_server.aconf import AConf
 from .codable_class import CodableClassItem
@@ -15,8 +15,7 @@ from ...utils.package_utils import (
 def data_client_instances(cdef: CDef) -> str:
     if not class_needs_api(cdef):
         return ''
-    aconf = cast(AConf, cdef.cls.aconf)
-    var_name = camelize(underscore(aconf.name))
+    var_name = camelize(pluralize(cdef.name))
     return f'public var {var_name} = {to_client(cdef)}()'
 
 
@@ -29,10 +28,10 @@ def data_requests_and_clients(cdef: CDef) -> str:
         _data_update_request(cdef, aconf.name) if 'U' in aconf.actions else '',
         _data_delete_request(cdef, aconf.name) if 'D' in aconf.actions else '',
         _data_id_request(cdef, aconf.name) if 'R' in aconf.actions else '',
-        _data_upsert_request(cdef, aconf.name),
-        _data_create_many_request(cdef, aconf.name),
-        _data_update_many_request(cdef, aconf.name),
-        _data_delete_many_request(cdef, aconf.name),
+        _data_upsert_request(cdef, aconf.name) if 'C' and 'U' in aconf.actions else '',
+        _data_create_many_request(cdef, aconf.name) if 'C' in aconf.actions else '',
+        _data_update_many_request(cdef, aconf.name) if 'U' in aconf.actions else '',
+        _data_delete_many_request(cdef, aconf.name) if 'D' in aconf.actions else '',
         _data_find_request(cdef, aconf.name) if 'L' in aconf.actions else '',
         _data_sign_in_request(cdef, aconf.name) if class_needs_session(cdef) else '',
         _data_client(cdef, aconf)
@@ -564,7 +563,7 @@ def _data_client_finds(cdef: CDef, aconf: AConf) -> str:
 
 
 def _data_client_upsert(cdef: CDef, aconf: AConf) -> str:
-    if 'U' not in aconf.actions:
+    if 'U' and 'C' not in aconf.actions:
         return ''
     return join_lines([
         f'    public func upsert(query: {to_seek_query(cdef)}, data: {to_update_input(cdef)}) async throws -> {to_result(cdef)} {"{"}',
