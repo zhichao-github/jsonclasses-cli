@@ -74,7 +74,7 @@ def _data_find_request_method(cdef: CDef) -> str:
     {'}'}
 
 {join_lines(map(lambda n: _data_find_request_nums(cdef, n), ['skip', 'limit', 'pageSize', 'pageNo']), 2)}
-    """.strip('\n')
+""".strip('\n')
 
 
 def _data_query_request_common(
