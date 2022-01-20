@@ -1168,9 +1168,6 @@ public class SimpleSongListRequest {
     public func pageNo(_ pageNo: Int) async throws -> [SimpleSong] {
         return try await self.pageNo(pageNo).exec()
     }
-
-
-
     public func pick(_ picks: [SimpleSongResultPick]) -> Self {
         if query == nil { query = SimpleSongListQuery() }
         query = query!.pick(picks)
@@ -1261,12 +1258,10 @@ public struct SimpleSongClient {
     public func id(_ id: String) -> SimpleSongIDRequest {
         return SimpleSongIDRequest(id: id)
     }
-
     public func id(_ id: String) async throws -> SimpleSong {
         let request = SimpleSongIDRequest(id: id)
         return try await request.exec()
     }
-
 
     public func find(_ query: SimpleSongListQuery? = nil) -> SimpleSongListRequest {
         return SimpleSongListRequest(query: query)
