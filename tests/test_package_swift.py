@@ -13,7 +13,7 @@ class TestPackageSwift(TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         cls.temp_dir = TemporaryDirectory()
-        cls.temp_path = Path(str(cls.temp_dir.name)) / "app_path"
+        cls.temp_path = Path(str(cls.temp_dir.name)) / "swift_path"
         cls.cls_dir = Path(getcwd()) / 'tests' / 'classes'
         cls.data_path = Path(getcwd()) / 'tests' / 'data_package_swift'
         cls.swift_path = cls.temp_path / 'packages' / 'swift'
@@ -27,11 +27,11 @@ class TestPackageSwift(TestCase):
         gitignore = self.swift_path / '.gitignore'
         package_swift = self.swift_path  / 'Package.swift'
         read_me = self.swift_path  / 'README.md'
-        api = self.swift_path  / 'Sources' / 'API.swift'
+        api = self.swift_path  / 'Sources' / 'API' / 'API.swift'
         self.assertTrue(gitignore.is_file(), gitignore.name)
         self.assertTrue(package_swift.is_file(), package_swift.name)
         self.assertTrue(read_me.is_file(), read_me.name)
-        self.assertTrue(api.is_file, api.name)
+        self.assertTrue(api.is_file(), api.name)
 
     def test_package_swift_content_of_gitignore_package_and_readme(self) -> None:
         package(self.temp_path, self.cls_dir / 'simple_song', 'swift', 'simple', True)
@@ -46,7 +46,8 @@ class TestPackageSwift(TestCase):
         self.assertEqual(read_me.read_text(), expect_read_me.read_text())
 
     # def test_package_create_without_link_and_session(self) -> None:
-    #     package(self.temp_path, self.cls_dir / 'simple_song', 'ts', 'simple', True)
-    #     result = self.swift_path / 'src' / 'index.ts'
-    #     expect = self.data_path / 'simple_song_api.ts'
+    #     package(self.temp_path, self.cls_dir / 'simple_song', 'swift', 'simple', True)
+    #     result = self.swift_path / 'Sources' / 'API' / 'API.swift'
+    #     expect = self.data_path / 'simple_api.swift'
+    #     print(expect.read_text())
     #     self.assertEqual(result.read_text(), expect.read_text())
