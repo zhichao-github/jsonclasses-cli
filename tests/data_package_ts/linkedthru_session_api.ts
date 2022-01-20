@@ -700,12 +700,12 @@ class UserClient {
         return new UserUpdateRequest(id, input, query)
     }
 
-    upsert(input: UserQueryData): UserUpsertRequest<User> {
-        return new UserUpsertRequest(input)
-    }
-
     updateMany(input: UserQueryData): UserUpdateManyRequest<User> {
         return new UserUpdateManyRequest(input)
+    }
+
+    upsert(input: UserQueryData): UserUpsertRequest<User> {
+        return new UserUpsertRequest(input)
     }
 
     find(query?: UserListQuery): UserListRequest<User> {
@@ -1001,12 +1001,12 @@ class ArticleClient {
         return new ArticleUpdateRequest(id, input, query)
     }
 
-    upsert(input: ArticleQueryData): ArticleUpsertRequest<Article> {
-        return new ArticleUpsertRequest(input)
-    }
-
     updateMany(input: ArticleQueryData): ArticleUpdateManyRequest<Article> {
         return new ArticleUpdateManyRequest(input)
+    }
+
+    upsert(input: ArticleQueryData): ArticleUpsertRequest<Article> {
+        return new ArticleUpsertRequest(input)
     }
 
     find(query?: ArticleListQuery): ArticleListRequest<Article> {
