@@ -505,11 +505,11 @@ def _data_client_ids(cdef: CDef, aconf: AConf) -> str:
         return ''
     return join_lines([
         f'    public func id(_ id: String) -> {to_id_request(cdef)} {"{"}',
-        f'      return {to_id_request(cdef)}(id: id)',
+        f'        return {to_id_request(cdef)}(id: id)',
         '    }',
         f'    public func id(_ id: String) async throws -> {to_result(cdef)} {"{"}',
-        f'      let request = {to_id_request(cdef)}(id: id)',
-        '       return try await request.exec()',
+        f'        let request = {to_id_request(cdef)}(id: id)',
+        '        return try await request.exec()',
         '    }'
     ], 1)
 

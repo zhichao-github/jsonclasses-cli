@@ -48,5 +48,4 @@ class TestPackageSwift(TestCase):
         package(self.temp_path, self.cls_dir / 'simple_song', 'swift', 'simple', True)
         result = self.swift_path / 'Sources' / 'API' / 'API.swift'
         expect = self.data_path / 'simple_api.swift'
-        print(result.read_text())
         self.assertEqual(result.read_text(), expect.read_text())
