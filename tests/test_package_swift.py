@@ -49,3 +49,33 @@ class TestPackageSwift(TestCase):
         result = self.swift_path / 'Sources' / 'API' / 'API.swift'
         expect = self.data_path / 'simple_api.swift'
         self.assertEqual(result.read_text(), expect.read_text())
+
+    def test_package_create_with_session(self) -> None:
+        package(self.temp_path, self.cls_dir / 'session.py', 'swift', 'session', True)
+        result = self.swift_path / 'Sources' / 'API' / 'API.swift'
+        expect = self.data_path / 'session_api.swift'
+        self.assertEqual(result.read_text(), expect.read_text())
+
+    def test_package_create_with_linkedthru_and_session(self) -> None:
+        package(self.temp_path, self.cls_dir / 'linkedthru_session.py', 'swift', 'linkedthru_session', True)
+        result = self.swift_path / 'Sources' / 'API' / 'API.swift'
+        expect = self.data_path / 'linkedthru_session_api.swift'
+        self.assertEqual(result.read_text(), expect.read_text())
+
+    def test_package_create_with_linkedthru(self) -> None: 
+        package(self.temp_path, self.cls_dir / 'linkedthru.py', 'swift', 'linkedthru', True)
+        result = self.swift_path / 'Sources' / 'API' / 'API.swift'
+        expect = self.data_path / 'linkedthru_api.swift'
+        self.assertEqual(result.read_text(), expect.read_text())
+    
+    def test_package_create_with_linkto_and_session(self) -> None:
+        package(self.temp_path, self.cls_dir / 'linkto_session.py', 'swift', 'linkto_session', True)
+        result = self.swift_path / 'Sources' / 'API' / 'API.swift'
+        expect = self.data_path / 'linkto_session_api.swift'
+        self.assertEqual(result.read_text(), expect.read_text())
+    
+    def test_package_create_with_linkto(self) -> None:
+        package(self.temp_path, self.cls_dir / 'linkto.py', 'swift', 'linkto', True)
+        result = self.swift_path / 'Sources' / 'API' / 'API.swift'
+        expect = self.data_path / 'linkto_api.swift'
+        self.assertEqual(result.read_text(), expect.read_text())
