@@ -21,7 +21,7 @@ def data_requests_and_clients(cdef: CDef) -> str:
         _data_update_request(cdef, aconf.name) if 'U' in aconf.actions else '',
         _data_delete_request(cdef, aconf.name) if 'D' in aconf.actions else '',
         _data_id_request(cdef, aconf.name) if 'R' in aconf.actions else '',
-        _data_upsert_request(cdef, aconf.name) if all( element in aconf.actions for element in ['C','U']) else '',
+        _data_upsert_request(cdef, aconf.name) if all(element in aconf.actions for element in ['C','U']) else '',
         _data_create_many_request(cdef, aconf.name) if 'C' in aconf.actions else '',
         _data_update_many_request(cdef, aconf.name) if 'U' in aconf.actions else '',
         _data_delete_many_request(cdef, aconf.name) if 'D' in aconf.actions else '',
@@ -327,7 +327,7 @@ def _data_client_upsert(cdef: CDef, aconf: AConf) -> str:
         f'        return new {to_upsert_request(cdef)}(input)',
         '    }',
     ])
-    
+
 
 
 def _data_client_find(cdef: CDef, aconf: AConf) -> str:
