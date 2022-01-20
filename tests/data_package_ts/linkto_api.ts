@@ -166,34 +166,38 @@ interface UnLink {
 
 export interface User {
     id: string
-    username: string
     phoneNum?: string
+    articles: Article[]
 }
 
 export interface UserCreateInput {
-    username: string
-    password: string
     phoneNum?: string
+    articles: ArticleCreateInput[]
 }
 
 export interface UserUpdateInput {
-    username?: string
-    password?: string
     phoneNum?: string | null
+    articles?: ArticleUpdateInput[]
 }
 
-type UserSortOrder = 'username' | '-username' | 'phoneNum' | '-phoneNum'
+type UserSortOrder = 'phoneNum' | '-phoneNum'
 
-type UserResultPick = 'id' | 'username' | 'phoneNum'
+type UserResultPick = 'id' | 'phoneNum' | 'articles'
+
+interface UserArticlesInclude {
+    articles?: ArticleListQuery
+}
+
+type UserInclude = UserArticlesInclude
 
 interface UserSingleQuery {
     _pick?: UserResultPick[]
     _omit?: UserResultPick[]
+    _includes?: UserInclude[]
 }
 
 interface UserListQuery {
     id?: StringQuery
-    username?: StringQuery
     phoneNum?: StringQuery
     _order?: UserSortOrder | UserSortOrder[]
     _limit?: number
@@ -202,11 +206,11 @@ interface UserListQuery {
     _pageSize?: number
     _pick?: UserResultPick[]
     _omit?: UserResultPick[]
+    _includes?: UserInclude[]
 }
 
 interface UserSeekQuery {
     id?: StringQuery
-    username?: StringQuery
     phoneNum?: StringQuery
 }
 
@@ -220,31 +224,45 @@ export interface Article {
     id: string
     title: string
     content?: string
+    users: User
+    users_id: string
 }
 
 export interface ArticleCreateInput {
     title: string
     content?: string
+    users: (UserCreateInput | Link)
+    users_id: string
 }
 
 export interface ArticleUpdateInput {
     title?: string
     content?: string | null
+    users?: (UserUpdateInput | Link | UnLink)
+    users_id?: string
 }
 
 type ArticleSortOrder = 'title' | '-title' | 'content' | '-content'
 
-type ArticleResultPick = 'id' | 'title' | 'content'
+type ArticleResultPick = 'id' | 'title' | 'content' | 'users' | 'users_id'
+
+interface ArticleUsersInclude {
+    users?: UserSingleQuery
+}
+
+type ArticleInclude = ArticleUsersInclude
 
 interface ArticleSingleQuery {
     _pick?: ArticleResultPick[]
     _omit?: ArticleResultPick[]
+    _includes?: ArticleInclude[]
 }
 
 interface ArticleListQuery {
     id?: StringQuery
     title?: StringQuery
     content?: StringQuery
+    users_id?: IDQuery
     _order?: ArticleSortOrder | ArticleSortOrder[]
     _limit?: number
     _skip?: number
@@ -252,74 +270,19 @@ interface ArticleListQuery {
     _pageSize?: number
     _pick?: ArticleResultPick[]
     _omit?: ArticleResultPick[]
+    _includes?: ArticleInclude[]
 }
 
 interface ArticleSeekQuery {
     id?: StringQuery
     title?: StringQuery
     content?: StringQuery
+    users_id?: IDQuery
 }
 
 interface ArticleQueryData {
     _query: ArticleSeekQuery
     _data: ArticleUpdateInput
-}
-
-
-interface UserSessionInput {
-    username: string
-    password: string
-}
-
-
-interface UserSession {
-    token: string
-    user: User
-}
-
-
-class SessionManager {
-
-    #sessionKey = '_jsonclasses_session'
-    #session: UserSession | undefined
-
-    static share = new SessionManager()
-
-    constructor() {
-        const item = localStorage.getItem(this.#sessionKey)
-        if (item && item !== null && item !== '') {
-            this.#session = JSON.parse(item)
-        } else {
-            this.#session = undefined
-        }
-    }
-
-    setSession(session: UserSession | undefined | null) {
-        if (session) {
-            this.#session = session
-            localStorage.setItem(this.#sessionKey, JSON.stringify(session))
-        } else {
-            this.#session = undefined
-            localStorage.removeItem(this.#sessionKey)
-        }
-    }
-
-    hasSession(): boolean {
-        return this.#session !== undefined
-    }
-
-    getToken(): string | undefined {
-        return this.#session?.token
-    }
-
-    getSession(): UserSession | undefined {
-        return this.#session
-    }
-
-    clearSession() {
-        this.#session = undefined
-        localStorage.removeItem(this.#sessionKey)
-    }
 }
 
 
@@ -331,7 +294,7 @@ class RequestManager {
 
 
     get headers() {
-        const token = SessionManager.share.hasSession() ? SessionManager.share.getToken() :  undefined 
+        const token =  undefined 
         return token ? {
             headers: {
                 'Authorization': `Bearer ${token}`
@@ -392,7 +355,11 @@ class UserCreateRequest<T extends Partial<User>> extends Promise<T> {
         return this
     }
 
-    
+    include(includes: UserInclude[]): UserCreateRequest<T> {
+        this.#query = {...this.#query, _includes: includes }
+        return this
+    }
+
     async exec(): Promise<T> {
         return await RequestManager.share.post('/users', this.#input, this.#query)
     }
@@ -421,7 +388,11 @@ class UserUpdateRequest<T extends Partial<User>> extends Promise<T> {
         return this
     }
 
-    
+    include(includes: UserInclude[]): UserUpdateRequest<T> {
+        this.#query = {...this.#query, _includes: includes }
+        return this
+    }
+
     async exec(): Promise<User> {
         return await RequestManager.share.patch(`/users/${this.#id}`, this.#input, this.#query)
     }
@@ -461,7 +432,11 @@ class UserIDRequest<T extends Partial<User>> extends Promise<T> {
         return this
     }
 
-    
+    include(includes: UserInclude[]): UserIDRequest<T> {
+        this.#query = {...this.#query, _includes: includes }
+        return this
+    }
+
     async exec(): Promise<User> {
         return await RequestManager.share.get(`/users/${this.#id}`, this.#query)
     }
@@ -503,7 +478,11 @@ class UserCreateManyRequest<T extends Partial<User>> extends Promise<T> {
         return this
     }
 
-    
+    include(includes: UserInclude[]): UserCreateManyRequest<T> {
+        this.#query = {...this.#query, _includes: includes }
+        return this
+    }
+
     async exec(): Promise<T[]> {
         return await RequestManager.share.post('/users', { '_create': this.#input })
     }
@@ -531,7 +510,11 @@ class UserUpdateManyRequest<T extends Partial<User>> extends Promise<T> {
         return this
     }
 
-    
+    include(includes: UserInclude[]): UserUpdateManyRequest<T> {
+        this.#query = {...this.#query, _includes: includes }
+        return this
+    }
+
     async exec(): Promise<User> {
         return await RequestManager.share.patch('/users', { '_update': this.#input })
     }
@@ -597,38 +580,13 @@ class UserListRequest<T extends Partial<User>> extends Promise<T[]> {
         return this
     }
 
-    
+    include(includes: UserInclude[]): UserListRequest<T> {
+        this.#query = {...this.#query, _includes: includes }
+        return this
+    }
+
     async exec(): Promise<User[]> {
         return await RequestManager.share.get('/users',this.#query)
-    }
-}
-
-class UserSignInRequest<T extends Partial<UserSession>> extends Promise<T> {
-
-    #input: UserSessionInput
-    #query?: UserSingleQuery
-
-    constructor(input: UserSessionInput, query?:UserSingleQuery){
-        super(() => {})
-        this.#input = input
-        this.#query = query
-    }
-
-    pick(picks: UserResultPick[]): UserSignInRequest<T> {
-        this.#query = {...this.#query, _pick: picks}
-        return this
-    }
-
-    omit(omits: UserResultPick[]): UserSignInRequest<T> {
-        this.#query = {...this.#query, _omit: omits}
-        return this
-    }
-
-    
-    async exec(): Promise<UserSession> {
-        const session = await RequestManager.share.post('/users/session', this.#input, this.#query) as UserSession
-        SessionManager.share.setSession(session)
-        return session
     }
 }
 
@@ -650,12 +608,12 @@ class UserClient {
         return new UserUpdateRequest(id, input, query)
     }
 
-    upsert(input: UserQueryData): UserUpsertRequest<User> {
-        return new UserUpsertRequest(input)
-    }
-
     updateMany(input: UserQueryData): UserUpdateManyRequest<User> {
         return new UserUpdateManyRequest(input)
+    }
+
+    upsert(input: UserQueryData): UserUpsertRequest<User> {
+        return new UserUpsertRequest(input)
     }
 
     find(query?: UserListQuery): UserListRequest<User> {
@@ -668,10 +626,6 @@ class UserClient {
 
     deleteMany(query?: UserSeekQuery): UserDeleteManyRequest {
         return new UserDeleteManyRequest(query)
-    }
-
-    signIn(input: UserSessionInput, query?: UserSingleQuery): UserSignInRequest<UserSession>{
-       return new UserSignInRequest(input, query)
     }
 
 }
@@ -698,7 +652,11 @@ class ArticleCreateRequest<T extends Partial<Article>> extends Promise<T> {
         return this
     }
 
-    
+    include(includes: ArticleInclude[]): ArticleCreateRequest<T> {
+        this.#query = {...this.#query, _includes: includes }
+        return this
+    }
+
     async exec(): Promise<T> {
         return await RequestManager.share.post('/articles', this.#input, this.#query)
     }
@@ -727,7 +685,11 @@ class ArticleUpdateRequest<T extends Partial<Article>> extends Promise<T> {
         return this
     }
 
-    
+    include(includes: ArticleInclude[]): ArticleUpdateRequest<T> {
+        this.#query = {...this.#query, _includes: includes }
+        return this
+    }
+
     async exec(): Promise<Article> {
         return await RequestManager.share.patch(`/articles/${this.#id}`, this.#input, this.#query)
     }
@@ -767,7 +729,11 @@ class ArticleIDRequest<T extends Partial<Article>> extends Promise<T> {
         return this
     }
 
-    
+    include(includes: ArticleInclude[]): ArticleIDRequest<T> {
+        this.#query = {...this.#query, _includes: includes }
+        return this
+    }
+
     async exec(): Promise<Article> {
         return await RequestManager.share.get(`/articles/${this.#id}`, this.#query)
     }
@@ -809,7 +775,11 @@ class ArticleCreateManyRequest<T extends Partial<Article>> extends Promise<T> {
         return this
     }
 
-    
+    include(includes: ArticleInclude[]): ArticleCreateManyRequest<T> {
+        this.#query = {...this.#query, _includes: includes }
+        return this
+    }
+
     async exec(): Promise<T[]> {
         return await RequestManager.share.post('/articles', { '_create': this.#input })
     }
@@ -837,7 +807,11 @@ class ArticleUpdateManyRequest<T extends Partial<Article>> extends Promise<T> {
         return this
     }
 
-    
+    include(includes: ArticleInclude[]): ArticleUpdateManyRequest<T> {
+        this.#query = {...this.#query, _includes: includes }
+        return this
+    }
+
     async exec(): Promise<Article> {
         return await RequestManager.share.patch('/articles', { '_update': this.#input })
     }
@@ -903,7 +877,11 @@ class ArticleListRequest<T extends Partial<Article>> extends Promise<T[]> {
         return this
     }
 
-    
+    include(includes: ArticleInclude[]): ArticleListRequest<T> {
+        this.#query = {...this.#query, _includes: includes }
+        return this
+    }
+
     async exec(): Promise<Article[]> {
         return await RequestManager.share.get('/articles',this.#query)
     }
@@ -927,12 +905,12 @@ class ArticleClient {
         return new ArticleUpdateRequest(id, input, query)
     }
 
-    upsert(input: ArticleQueryData): ArticleUpsertRequest<Article> {
-        return new ArticleUpsertRequest(input)
-    }
-
     updateMany(input: ArticleQueryData): ArticleUpdateManyRequest<Article> {
         return new ArticleUpdateManyRequest(input)
+    }
+
+    upsert(input: ArticleQueryData): ArticleUpsertRequest<Article> {
+        return new ArticleUpsertRequest(input)
     }
 
     find(query?: ArticleListQuery): ArticleListRequest<Article> {
@@ -958,14 +936,6 @@ class API {
 
     get articles(): ArticleClient {
         return new ArticleClient()
-    }
-
-    get session(): SessionManager {
-       return SessionManager.share
-    }
-
-    signOut(): void {
-       SessionManager.share.clearSession()
     }
 
 }
