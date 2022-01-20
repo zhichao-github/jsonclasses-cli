@@ -503,16 +503,15 @@ def _data_client_delete(cdef: CDef, aconf: AConf) -> str:
 def _data_client_ids(cdef: CDef, aconf: AConf) -> str:
     if 'R' not in aconf.actions:
         return ''
-    return f"""
-    public func id(_ id: String) -> {to_id_request(cdef)} {'{'}
-        return {to_id_request(cdef)}(id: id)
-    {'}'}
-
-    public func id(_ id: String) async throws -> {to_result(cdef)} {'{'}
-        let request = {to_id_request(cdef)}(id: id)
-        return try await request.exec()
-    {'}'}
-    """.strip('\n')
+    return join_lines([
+        f'    public func id(_ id: String) -> {to_id_request(cdef)} {"{"}',
+        f'      return {to_id_request(cdef)}(id: id)',
+        '    }',
+        f'    public func id(_ id: String) async throws -> {to_result(cdef)} {"{"}',
+        f'      let request = {to_id_request(cdef)}(id: id)',
+        '       return try await request.exec()',
+        '    }'
+    ], 1)
 
 
 def _data_client_find_2(cdef: CDef, items: list[tuple[str, str]]) -> str:
