@@ -1,12 +1,9 @@
 from __future__ import annotations
-from cgitb import reset
-from os import chdir, getcwd
-from unittest import TestCase, result
+from os import getcwd
+from unittest import TestCase
 from tempfile import TemporaryDirectory
 from pathlib import Path
-from unittest.mock import patch
 from jsonclasses_cli.package import package
-from jsonclasses_cli.package.ts import ts
 
 
 class TestPackageTs(TestCase):
@@ -15,7 +12,7 @@ class TestPackageTs(TestCase):
     def setUpClass(cls) -> None:
         cls.temp_dir = TemporaryDirectory()
         cls.temp_path = Path(str(cls.temp_dir.name)) / "app_path"
-        cls.cls_dir = Path(getcwd()) / 'tests' / 'classes' 
+        cls.cls_dir = Path(getcwd()) / 'tests' / 'classes'
         cls.data_dir = Path(getcwd()) / 'tests' / 'data_package_ts'
         cls.ts_path = cls.temp_path / 'packages' / 'ts'
 
@@ -64,18 +61,18 @@ class TestPackageTs(TestCase):
         expect = self.data_dir / 'linkedthru_session_api.ts'
         self.assertEqual(result.read_text(), expect.read_text())
 
-    def test_package_create_with_linkedthru(self) -> None: 
+    def test_package_create_with_linkedthru(self) -> None:
         package(self.temp_path, self.cls_dir / 'linkedthru.py', 'ts', 'linkedthru', True)
         result = self.ts_path / 'src' / 'index.ts'
         expect = self.data_dir / 'linkedthru_api.ts'
         self.assertEqual(result.read_text(), expect.read_text())
-    
+
     def test_package_create_with_linkto_and_session(self) -> None:
         package(self.temp_path, self.cls_dir / 'linkto_session.py', 'ts', 'linkto_session', True)
         result = self.ts_path / 'src' / 'index.ts'
         expect = self.data_dir / 'linkto_session_api.ts'
         self.assertEqual(result.read_text(), expect.read_text())
-    
+
     def test_package_create_with_linkto(self) -> None:
         package(self.temp_path, self.cls_dir / 'linkto.py', 'ts', 'linkto', True)
         result = self.ts_path / 'src' / 'index.ts'
