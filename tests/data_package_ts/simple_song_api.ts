@@ -513,12 +513,12 @@ class SimpleSongClient {
         return new SimpleSongUpdateRequest(id, input, query)
     }
 
-    upsert(input: SimpleSongQueryData): SimpleSongUpsertRequest<SimpleSong> {
-        return new SimpleSongUpsertRequest(input)
-    }
-
     updateMany(input: SimpleSongQueryData): SimpleSongUpdateManyRequest<SimpleSong> {
         return new SimpleSongUpdateManyRequest(input)
+    }
+
+    upsert(input: SimpleSongQueryData): SimpleSongUpsertRequest<SimpleSong> {
+        return new SimpleSongUpsertRequest(input)
     }
 
     find(query?: SimpleSongListQuery): SimpleSongListRequest<SimpleSong> {

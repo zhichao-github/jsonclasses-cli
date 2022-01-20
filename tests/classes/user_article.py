@@ -7,7 +7,7 @@ from jsonclasses_server import api, authorized
 
 @authorized
 @api
-@jsonclass(class_graph='user')
+@jsonclass(class_graph='session')
 class User:
     id: str = types.readonly.str.primary.mongoid.required
     username: str = types.str.authidentity.writenonnull.required
@@ -16,7 +16,7 @@ class User:
 
 
 @api
-@jsonclass(class_graph='user')
+@jsonclass(class_graph='session')
 class Article:
     id: str = types.readonly.str.primary.mongoid.required
     title: str = types.str.required
