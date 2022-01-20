@@ -3,9 +3,8 @@ from os import chdir, getcwd
 from unittest import TestCase
 from tempfile import TemporaryDirectory
 from pathlib import Path
-from unittest.mock import patch
 from jsonclasses_cli.package import package
-from jsonclasses_cli.package.ts import ts
+from jsonclasses_cli.utils.write_file import write_file
 
 
 class TestPackageSwift(TestCase):
@@ -45,9 +44,9 @@ class TestPackageSwift(TestCase):
         self.assertEqual(gitignore.read_text(), expect_gitignore.read_text())
         self.assertEqual(read_me.read_text(), expect_read_me.read_text())
 
-    # def test_package_create_without_link_and_session(self) -> None:
-    #     package(self.temp_path, self.cls_dir / 'simple_song', 'swift', 'simple', True)
-    #     result = self.swift_path / 'Sources' / 'API' / 'API.swift'
-    #     expect = self.data_path / 'simple_api.swift'
-    #     print(expect.read_text())
-    #     self.assertEqual(result.read_text(), expect.read_text())
+    def test_package_create_without_link_and_session(self) -> None:
+        package(self.temp_path, self.cls_dir / 'simple_song', 'swift', 'simple', True)
+        result = self.swift_path / 'Sources' / 'API' / 'API.swift'
+        expect = self.data_path / 'simple_api.swift'
+        print(result.read_text())
+        self.assertEqual(result.read_text(), expect.read_text())

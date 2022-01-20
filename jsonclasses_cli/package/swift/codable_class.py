@@ -38,7 +38,7 @@ def _codable_class_inst_vars(items: list[CodableClassItem], unwrapped: bool) -> 
 
 def _codable_class_init_param_list(items: list[CodableClassItem]) -> str:
     last = len(items) - 1
-    return join_lines(map(lambda i: f"        {i[1][2]}: {i[1][3]}{'? = nil' if i[1][4] else ''}{'' if i[0] == last else ', '}", enumerate(items)), 1)
+    return join_lines(map(lambda i: f"        {i[1][2]}: {i[1][3]}{'? = nil' if i[1][4] else ''}{'' if i[0] == last else ','}", enumerate(items)), 1)
 
 
 def _codable_class_init_assigns(items: list[CodableClassItem]) -> str:
