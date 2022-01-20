@@ -47,7 +47,7 @@ def main_program_content(cgraph: CGraph) -> str:
         response_struct(),
         user_default(),
         session_manager() if use_session else '',
-        sign_out(),
+        sign_out() if use_session else '',
         request_manager(request_url, use_session),
         *map(lambda c: data_requests_and_clients(c), cgraph._map.values()),
         join_lines(map(lambda c: data_client_instances(c), cgraph._map.values()), 1),
