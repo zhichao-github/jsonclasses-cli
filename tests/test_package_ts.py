@@ -23,9 +23,9 @@ class TestPackageTs(TestCase):
     def test_package_create_all_files(self) -> None:
         package(self.temp_path, self.cls_dir / 'simple_song', 'ts', 'simple', True)
         gitignore_path = self.ts_path / '.gitignore'
-        package_json_path =  self.ts_path  / 'package.json'
-        config_path =  self.ts_path / 'tsconfig.json'
-        api_path =  self.ts_path  / 'src' / 'index.ts'
+        package_json_path = self.ts_path  / 'package.json'
+        config_path = self.ts_path / 'tsconfig.json'
+        api_path = self.ts_path  / 'src' / 'index.d.ts'
         self.assertTrue(gitignore_path.is_file(), gitignore_path.name)
         self.assertTrue(package_json_path.is_file(), package_json_path.name)
         self.assertTrue(config_path.is_file, config_path.name)
@@ -45,36 +45,36 @@ class TestPackageTs(TestCase):
 
     def test_package_create_without_link_and_session(self) -> None:
         package(self.temp_path, self.cls_dir / 'simple_song.py', 'ts', 'simple', True)
-        result = self.ts_path / 'src' / 'index.ts'
+        result = self.ts_path / 'src' / 'index.d.ts'
         expect = self.data_dir / 'simple_song_api.ts'
         self.assertEqual(result.read_text(), expect.read_text())
 
     def test_package_create_with_session(self) -> None:
         package(self.temp_path, self.cls_dir / 'session.py', 'ts', 'session', True)
-        result = self.ts_path / 'src' / 'index.ts'
+        result = self.ts_path / 'src' / 'index.d.ts'
         expect = self.data_dir / 'session_api.ts'
         self.assertEqual(result.read_text(), expect.read_text())
 
     def test_package_create_with_linkedthru_and_session(self) -> None:
         package(self.temp_path, self.cls_dir / 'linkedthru_session.py', 'ts', 'linkedthru_session', True)
-        result = self.ts_path / 'src' / 'index.ts'
+        result = self.ts_path / 'src' / 'index.d.ts'
         expect = self.data_dir / 'linkedthru_session_api.ts'
         self.assertEqual(result.read_text(), expect.read_text())
 
     def test_package_create_with_linkedthru(self) -> None:
         package(self.temp_path, self.cls_dir / 'linkedthru.py', 'ts', 'linkedthru', True)
-        result = self.ts_path / 'src' / 'index.ts'
+        result = self.ts_path / 'src' / 'index.d.ts'
         expect = self.data_dir / 'linkedthru_api.ts'
         self.assertEqual(result.read_text(), expect.read_text())
 
     def test_package_create_with_linkto_and_session(self) -> None:
         package(self.temp_path, self.cls_dir / 'linkto_session.py', 'ts', 'linkto_session', True)
-        result = self.ts_path / 'src' / 'index.ts'
+        result = self.ts_path / 'src' / 'index.d.ts'
         expect = self.data_dir / 'linkto_session_api.ts'
         self.assertEqual(result.read_text(), expect.read_text())
 
     def test_package_create_with_linkto(self) -> None:
         package(self.temp_path, self.cls_dir / 'linkto.py', 'ts', 'linkto', True)
-        result = self.ts_path / 'src' / 'index.ts'
+        result = self.ts_path / 'src' / 'index.d.ts'
         expect = self.data_dir / 'linkto_api.ts'
         self.assertEqual(result.read_text(), expect.read_text())
