@@ -22,7 +22,7 @@ def _create_dest_dir_if_needed(dest: Path) -> Path:
 
 
 def _generate_main_program_file(dest: Path, cgraph: CGraph, silent: bool = False):
-    write_file(dest / 'src/index.d.ts', main_program_content(cgraph), silent)
+    write_file(dest / 'src/index.ts', main_program_content(cgraph), silent)
 
 
 def _generate_package_json_file(dest: Path, original_dest: Path, silent: bool = False):
