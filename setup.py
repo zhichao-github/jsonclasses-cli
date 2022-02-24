@@ -1,7 +1,7 @@
 """setup.py"""
 from pathlib import Path
 from setuptools import setup, find_packages
-version = exec(open("jsonclasses_cli/version.py").read())
+from jsonclasses_cli.version import version
 # The text of the README file
 README = (Path(__file__).parent / "README.md").read_text()
 
